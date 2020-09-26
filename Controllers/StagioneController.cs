@@ -14,11 +14,16 @@ namespace SsdWebApi.Controllers
   [Route("api/Stagione")]
   public class StagioneController : ControllerBase
   {
-    private readonly StagioneContext _context; public StagioneController(StagioneContext context) { _context = context; }
+    private readonly StagioneContext _context;
+
+    public StagioneController(StagioneContext context)
+    {
+      _context = context;
+    }
 
     [HttpGet] public ActionResult<List<Stagione>> GetAll() => _context.cronistoria.ToList();
 
-    [HttpGet]
+    [HttpGet("{id}")]
     public ActionResult<Stagione> Get(int id)
     {
       return _context.cronistoria.Find(id);
@@ -40,7 +45,7 @@ namespace SsdWebApi.Controllers
       return entity;
     }
 
-    [HttpDelete]
+    [HttpDelete("{id}")]
     public async Task<ActionResult<Stagione>> Delete(int id)
     {
       var entity = await _context.cronistoria.FindAsync(id);
