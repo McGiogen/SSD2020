@@ -24,25 +24,58 @@ namespace SsdWebApi.Controllers
     [HttpGet] public ActionResult<List<Stagione>> GetAll() => _context.cronistoria.ToList();
 
     [HttpGet("{id}")]
-    public ActionResult<Stagione> Get(int id)
+    public async Task<ActionResult<Stagione>> Get(int id)
     {
-      return _context.cronistoria.Find(id);
+      var entity = await _context.cronistoria.FindAsync(id);
+      if (entity == null) return NotFound();
+      return entity;
     }
 
     [HttpPost]
     public async Task<ActionResult<Stagione>> Create(Stagione entity)
     {
-      _context.cronistoria.Add(entity);
-      await _context.SaveChangesAsync();
-      return entity;
+      try
+      {
+        _context.cronistoria.Add(entity);
+        await _context.SaveChangesAsync();
+        return entity;
+      }
+      catch (Exception ex)
+      {
+        Console.WriteLine("[ERROR] " + ex.Message);
+        return StatusCode(500, ex);
+      }
     }
 
-    [HttpPut]
-    public async Task<ActionResult<Stagione>> Update(/*int id,*/ Stagione entity)
+    [HttpPut("{id}")]
+    public async Task<ActionResult<Stagione>> Update(int id, Stagione entity)
     {
-      _context.cronistoria.Update(entity);
-      await _context.SaveChangesAsync();
-      return entity;
+      if (id != entity.id) return BadRequest();
+
+      // _context.cronistoria.Update(entity);
+      // await _context.SaveChangesAsync();
+      // return entity;
+
+      _context.Entry(entity).State = EntityState.Modified;
+
+      try
+      {
+        await _context.SaveChangesAsync();
+      }
+      catch (Exception ex)
+      {
+        if (!_context.cronistoria.Any(s => s.id == id))
+        {
+          return NotFound();
+        }
+        else
+        {
+          Console.WriteLine("[ERROR] " + ex.Message);
+          return StatusCode(500, ex);
+        }
+      }
+
+      return Ok();
     }
 
     [HttpDelete("{id}")]
