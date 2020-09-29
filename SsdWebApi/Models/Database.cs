@@ -3,13 +3,18 @@ using Microsoft.Data.Sqlite;
 
 namespace SsdWebApi.Repositories
 {
-  public class Database
+  public class Persistence
   {
     // public static void Main() {
-    //   new Database().testDB();
+    //   new Persistence();
     // }
 
-    public void testDB()
+    public Persistence()
+    {
+      testDB();
+    }
+
+    private void testDB()
     {
       var connectionStringBuilder = new SqliteConnectionStringBuilder();
       //Use DB in project directory.  If it does not exist, create it:

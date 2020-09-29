@@ -14,7 +14,7 @@ namespace SsdWebApi
   {
     public static void Main(string[] args)
     {
-      new Database().testDB();
+      new Persistence();
       CreateHostBuilder(args).Build().Run();
     }
 
