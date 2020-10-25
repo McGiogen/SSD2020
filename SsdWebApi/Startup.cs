@@ -44,6 +44,10 @@ namespace SsdWebApi
         app.UseDeveloperExceptionPage();
       }
 
+      // Per servire il client
+      app.UseDefaultFiles();
+      app.UseStaticFiles();
+
       app.UseHttpsRedirection();
 
       app.UseRouting();

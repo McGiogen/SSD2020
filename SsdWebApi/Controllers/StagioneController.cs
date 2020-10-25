@@ -32,6 +32,7 @@ namespace SsdWebApi.Controllers
     }
 
     [HttpPost]
+    // [Route("[action]")] per ottenere il seguente route: /api/Stagione/<nome-funzione>
     public async Task<ActionResult<Stagione>> Create(Stagione entity)
     {
       try
