@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using SsdWebApi.Repositories;
 
 namespace SsdWebApi
 {
@@ -14,7 +13,6 @@ namespace SsdWebApi
   {
     public static void Main(string[] args)
     {
-      new Persistence();
       CreateHostBuilder(args).Build().Run();
     }
 

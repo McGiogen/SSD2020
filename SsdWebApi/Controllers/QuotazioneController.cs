@@ -11,33 +11,33 @@ using SsdWebApi.Models;
 namespace SsdWebApi.Controllers
 {
   [ApiController]
-  [Route("api/Stagione")]
-  public class StagioneController : ControllerBase
+  [Route("api/[controller]")]
+  public class QuotazioneController : ControllerBase
   {
-    private readonly StagioneContext _context;
+    private readonly QuotazioneContext _context;
 
-    public StagioneController(StagioneContext context)
+    public QuotazioneController(QuotazioneContext context)
     {
       _context = context;
     }
 
-    [HttpGet] public ActionResult<List<Stagione>> GetAll() => _context.cronistoria.ToList();
+    [HttpGet] public async Task<ActionResult<List<Quotazione>>> GetAll() => await _context.indici.ToListAsync();
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Stagione>> Get(int id)
+    public async Task<ActionResult<Quotazione>> Get(int id)
     {
-      var entity = await _context.cronistoria.FindAsync(id);
+      var entity = await _context.indici.FindAsync(id);
       if (entity == null) return NotFound();
       return entity;
     }
 
     [HttpPost]
-    // [Route("[action]")] per ottenere il seguente route: /api/Stagione/<nome-funzione>
-    public async Task<ActionResult<Stagione>> Create(Stagione entity)
+    // [Route("[action]")] per ottenere il seguente route: /api/Quotazione/<nome-funzione>
+    public async Task<ActionResult<Quotazione>> Create(Quotazione entity)
     {
       try
       {
-        _context.cronistoria.Add(entity);
+        _context.indici.Add(entity);
         await _context.SaveChangesAsync();
         return entity;
       }
@@ -49,13 +49,9 @@ namespace SsdWebApi.Controllers
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<Stagione>> Update(int id, Stagione entity)
+    public async Task<ActionResult<Quotazione>> Update(int id, Quotazione entity)
     {
       if (id != entity.id) return BadRequest();
-
-      // _context.cronistoria.Update(entity);
-      // await _context.SaveChangesAsync();
-      // return entity;
 
       _context.Entry(entity).State = EntityState.Modified;
 
@@ -65,7 +61,7 @@ namespace SsdWebApi.Controllers
       }
       catch (Exception ex)
       {
-        if (!_context.cronistoria.Any(s => s.id == id))
+        if (!_context.indici.Any(s => s.id == id))
         {
           return NotFound();
         }
@@ -80,12 +76,12 @@ namespace SsdWebApi.Controllers
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult<Stagione>> Delete(int id)
+    public async Task<ActionResult<Quotazione>> Delete(int id)
     {
-      var entity = await _context.cronistoria.FindAsync(id);
+      var entity = await _context.indici.FindAsync(id);
       if (entity == null) return NotFound();
 
-      _context.cronistoria.Remove(entity);
+      _context.indici.Remove(entity);
       await _context.SaveChangesAsync();
       return entity;
     }
