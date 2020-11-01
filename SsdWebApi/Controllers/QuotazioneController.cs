@@ -72,7 +72,7 @@ namespace SsdWebApi.Controllers
         }
       }
 
-      return Ok();
+      return entity;
     }
 
     [HttpDelete("{id}")]
