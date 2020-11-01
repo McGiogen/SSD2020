@@ -65,7 +65,8 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "ssd-web-app:build"
+            "browserTarget": "ssd-web-app:build",
+            "proxyConfig": "proxy.config.json"
           },
           "configurations": {
             "production": {
