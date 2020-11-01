@@ -5,7 +5,7 @@ namespace SsdWebApi
   public class Quotazione
   {
     public int id { get; set; }
-    public int Data { get; set; }
+    public string Data { get; set; }
     public string SP_500 { get; set; }
     public string FTSE_MIB { get; set; }
     public string GOLD_SPOT { get; set; }
