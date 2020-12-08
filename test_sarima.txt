@@ -1,0 +1,125 @@
+US_Treasury.csv
+Performing stepwise search to minimize aic
+ ARIMA(1,0,1)(0,1,1)[12] intercept   : AIC=-44953.669, Time=78.81 sec
+ ARIMA(0,0,0)(0,1,0)[12] intercept   : AIC=-33856.312, Time=2.64 sec
+ ARIMA(1,0,0)(1,1,0)[12] intercept   : AIC=-44118.719, Time=77.74 sec
+ ARIMA(0,0,1)(0,1,1)[12] intercept   : AIC=-38376.246, Time=80.25 sec
+ ARIMA(0,0,0)(0,1,0)[12]             : AIC=-33597.665, Time=1.05 sec
+ ARIMA(1,0,1)(0,1,0)[12] intercept   : AIC=-42814.264, Time=17.80 sec
+ ARIMA(1,0,1)(1,1,1)[12] intercept   : AIC=-44960.441, Time=206.30 sec
+ ARIMA(1,0,1)(1,1,0)[12] intercept   : AIC=-44111.227, Time=142.91 sec
+ ARIMA(1,0,1)(2,1,1)[12] intercept   : AIC=-44603.952, Time=151.47 sec
+ ARIMA(1,0,1)(1,1,2)[12] intercept   : AIC=-45096.732, Time=285.77 sec
+ ARIMA(1,0,1)(0,1,2)[12] intercept   : AIC=-44891.238, Time=166.37 sec
+ ARIMA(1,0,1)(2,1,2)[12] intercept   : AIC=-45005.898, Time=345.47 sec
+ ARIMA(0,0,1)(1,1,2)[12] intercept   : AIC=-38373.579, Time=316.19 sec
+ ARIMA(1,0,0)(1,1,2)[12] intercept   : AIC=-45045.982, Time=182.34 sec
+ ARIMA(2,0,1)(1,1,2)[12] intercept   : AIC=inf, Time=437.87 sec
+ ARIMA(1,0,2)(1,1,2)[12] intercept   : AIC=-45187.318, Time=457.19 sec
+ ARIMA(1,0,2)(0,1,2)[12] intercept   : AIC=-44934.938, Time=360.21 sec
+ ARIMA(1,0,2)(1,1,1)[12] intercept   : AIC=-44884.213, Time=168.58 sec
+ ARIMA(1,0,2)(2,1,2)[12] intercept   : AIC=-45216.174, Time=411.00 sec
+ ARIMA(1,0,2)(2,1,1)[12] intercept   : AIC=-45136.710, Time=352.54 sec
+ ARIMA(0,0,2)(2,1,2)[12] intercept   : AIC=inf, Time=nan sec
+ ARIMA(2,0,2)(2,1,2)[12] intercept   : AIC=-45145.799, Time=473.93 sec
+ ARIMA(1,0,3)(2,1,2)[12] intercept   : AIC=-45139.770, Time=389.18 sec
+ ARIMA(0,0,1)(2,1,2)[12] intercept   : AIC=-38373.021, Time=317.86 sec
+ ARIMA(0,0,3)(2,1,2)[12] intercept   : AIC=-41443.585, Time=317.35 sec
+ ARIMA(2,0,1)(2,1,2)[12] intercept   : AIC=-45423.378, Time=484.31 sec
+ ARIMA(2,0,1)(2,1,1)[12] intercept   : AIC=-44859.876, Time=276.15 sec
+ ARIMA(2,0,1)(1,1,1)[12] intercept   : AIC=-45023.838, Time=201.46 sec
+ ARIMA(2,0,0)(2,1,2)[12] intercept   : AIC=-44951.649, Time=480.73 sec
+ ARIMA(3,0,1)(2,1,2)[12] intercept   : AIC=-44714.614, Time=482.67 sec
+ ARIMA(1,0,0)(2,1,2)[12] intercept   : AIC=-44978.669, Time=351.35 sec
+ ARIMA(3,0,0)(2,1,2)[12] intercept   : AIC=-44707.691, Time=282.34 sec
+ ARIMA(3,0,2)(2,1,2)[12] intercept   : AIC=-44222.696, Time=474.16 sec
+ ARIMA(2,0,1)(2,1,2)[12]             : AIC=inf, Time=204.75 sec
+
+Best model:  ARIMA(2,0,1)(2,1,2)[12] intercept
+Total fit time: 9017.098 seconds
+                                        SARIMAX Results
+===============================================================================================
+Dep. Variable:                                       y   No. Observations:                 5211
+Model:             SARIMAX(2, 0, 1)x(2, 1, [1, 2], 12)   Log Likelihood               22720.689
+Date:                                 lun, 07 dic 2020   AIC                         -45423.378
+Time:                                         21:38:09   BIC                         -45364.372
+Sample:                                              0   HQIC                        -45402.738
+                                                - 5211
+Covariance Type:                                   opg
+==============================================================================
+                 coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------
+intercept  -9.926e-07   3.62e-05     -0.027      0.978    -7.2e-05       7e-05
+ar.L1          0.0372      0.030      1.251      0.211      -0.021       0.095
+ar.L2          0.9617      0.030     32.505      0.000       0.904       1.020
+ma.L1          0.9707      0.028     35.229      0.000       0.917       1.025
+ar.S.L12      -0.5223      0.077     -6.776      0.000      -0.673      -0.371
+ar.S.L24      -0.2259      0.015    -14.928      0.000      -0.256      -0.196
+ma.S.L12      -0.4134      0.075     -5.475      0.000      -0.561      -0.265
+ma.S.L24      -0.2058      0.063     -3.256      0.001      -0.330      -0.082
+sigma2      9.311e-06   1.23e-07     75.808      0.000    9.07e-06    9.55e-06
+===================================================================================
+Ljung-Box (Q):                      283.12   Jarque-Bera (JB):              2097.66
+Prob(Q):                              0.00   Prob(JB):                         0.00
+Heteroskedasticity (H):               0.76   Skew:                            -0.25
+Prob(H) (two-sided):                  0.00   Kurtosis:                         6.07
+===================================================================================
+
+US_Treasury.csv
+Performing stepwise search to minimize aic
+ ARIMA(2,0,2)(0,1,1)[5] intercept   : AIC=-43243.045, Time=48.38 sec
+ ARIMA(0,0,0)(0,1,0)[5] intercept   : AIC=-37109.521, Time=1.98 sec
+ ARIMA(1,0,0)(1,1,0)[5] intercept   : AIC=-43009.162, Time=20.19 sec
+ ARIMA(0,0,1)(0,1,1)[5] intercept   : AIC=-40234.395, Time=44.37 sec
+ ARIMA(0,0,0)(0,1,0)[5]             : AIC=-37016.338, Time=0.71 sec
+ ARIMA(2,0,2)(0,1,0)[5] intercept   : AIC=-41203.223, Time=11.14 sec
+ ARIMA(2,0,2)(1,1,1)[5] intercept   : AIC=-43509.000, Time=110.68 sec
+ ARIMA(2,0,2)(1,1,0)[5] intercept   : AIC=-42680.197, Time=48.01 sec
+ ARIMA(2,0,2)(2,1,1)[5] intercept   : AIC=-42573.112, Time=58.59 sec
+ ARIMA(2,0,2)(1,1,2)[5] intercept   : AIC=-43488.733, Time=156.33 sec
+ ARIMA(2,0,2)(0,1,2)[5] intercept   : AIC=-43251.185, Time=107.63 sec
+ ARIMA(2,0,2)(2,1,0)[5] intercept   : AIC=-42387.706, Time=89.36 sec
+ ARIMA(2,0,2)(2,1,2)[5] intercept   : AIC=-43484.842, Time=126.92 sec
+ ARIMA(1,0,2)(1,1,1)[5] intercept   : AIC=-43880.598, Time=61.26 sec
+ ARIMA(1,0,2)(0,1,1)[5] intercept   : AIC=-43609.914, Time=62.77 sec
+ ARIMA(1,0,2)(1,1,0)[5] intercept   : AIC=-43043.164, Time=34.04 sec
+ ARIMA(1,0,2)(2,1,1)[5] intercept   : AIC=-43675.897, Time=81.70 sec
+ ARIMA(1,0,2)(1,1,2)[5] intercept   : AIC=-43781.555, Time=101.19 sec
+ ARIMA(1,0,2)(0,1,0)[5] intercept   : AIC=-41897.344, Time=8.90 sec
+ ARIMA(1,0,2)(0,1,2)[5] intercept   : AIC=-44061.352, Time=93.32 sec
+ ARIMA(0,0,2)(0,1,2)[5] intercept   : AIC=-41908.424, Time=73.57 sec
+ ARIMA(1,0,1)(0,1,2)[5] intercept   : AIC=-43339.628, Time=64.92 sec
+ ARIMA(1,0,3)(0,1,2)[5] intercept   : AIC=-43542.115, Time=94.89 sec
+ ARIMA(0,0,1)(0,1,2)[5] intercept   : AIC=-40242.864, Time=48.20 sec
+ ARIMA(0,0,3)(0,1,2)[5] intercept   : AIC=-42109.883, Time=88.17 sec
+ ARIMA(2,0,1)(0,1,2)[5] intercept   : AIC=-43121.697, Time=88.49 sec
+ ARIMA(2,0,3)(0,1,2)[5] intercept   : AIC=-43640.252, Time=144.54 sec
+ ARIMA(1,0,2)(0,1,2)[5]             : AIC=-44028.992, Time=37.13 sec
+
+Best model:  ARIMA(1,0,2)(0,1,2)[5] intercept
+Total fit time: 1907.415 seconds
+                                     SARIMAX Results
+=========================================================================================
+Dep. Variable:                                 y   No. Observations:                 5023
+Model:             SARIMAX(1, 0, 2)x(0, 1, 2, 5)   Log Likelihood               22037.676
+Date:                           lun, 07 dic 2020   AIC                         -44061.352
+Time:                                   23:14:44   BIC                         -44015.707
+Sample:                                        0   HQIC                        -44045.357
+                                          - 5023
+Covariance Type:                             opg
+==============================================================================
+                 coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------
+intercept   6.689e-05   7.33e-06      9.128      0.000    5.25e-05    8.13e-05
+ar.L1          0.8974      0.005    168.982      0.000       0.887       0.908
+ma.L1          0.0385      0.014      2.739      0.006       0.011       0.066
+ma.L2          0.1277      0.015      8.782      0.000       0.099       0.156
+ma.S.L5       -0.8881      0.013    -65.988      0.000      -0.914      -0.862
+ma.S.L10      -0.0013      0.013     -0.099      0.921      -0.026       0.024
+sigma2      9.667e-06   1.55e-07     62.465      0.000    9.36e-06    9.97e-06
+===================================================================================
+Ljung-Box (Q):                     1621.34   Jarque-Bera (JB):              1060.66
+Prob(Q):                              0.00   Prob(JB):                         0.00
+Heteroskedasticity (H):               0.56   Skew:                             0.08
+Prob(H) (two-sided):                  0.00   Kurtosis:                         5.25
+===================================================================================
