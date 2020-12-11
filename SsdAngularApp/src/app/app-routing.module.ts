@@ -1,13 +1,23 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { HomeComponent } from './home/home.component';
+import { PortafoglioComponent } from './portafoglio/portafoglio.component';
+import { PrevisioneComponent } from './previsione/previsione.component';
+import { RestFormComponent } from './rest-form/rest-form.component';
 
 
 const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    component: HomeComponent,
+    component: PortafoglioComponent,
+  },
+  {
+    path: 'previsione',
+    component: PrevisioneComponent,
+  },
+  {
+    path: 'rest-form',
+    component: RestFormComponent,
   },
   {
     path: '**',

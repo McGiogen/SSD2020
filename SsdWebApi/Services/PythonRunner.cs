@@ -50,8 +50,8 @@ namespace SsdWebApi.Services
         // Separated FileName and Arguments
         // FileName = "cmd.exe",
         // Arguments = $"/c c:/ProgramData/Anaconda3/condabin/conda.bat activate {Environment}&&python {strCommand}",
-        FileName = "/bin/bash",
-        Arguments = $"-c 'python {strCommand}'",
+        FileName = "/usr/bin/python3",
+        Arguments = $"{strCommand}",
         UseShellExecute = false,
         CreateNoWindow = false,
         ErrorDialog = false,

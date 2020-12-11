@@ -21,6 +21,13 @@ def print_figure(fig):
 	fig.savefig(buf, format='png')
 	print(base64.b64encode(buf.getbuffer()))
 
+def plot_show(shouldShowPlot):
+  if (shouldShowPlot == True):
+    plt.show()
+  else:
+    print_figure(plt.gcf())
+    plt.clf()
+
 def plot(forecastResult, shouldShowPlot):
   plt.plot(forecastResult.dataset['value'], 'black', label = 'History')
   plt.plot(forecastResult.train,label='Train')
@@ -31,10 +38,7 @@ def plot(forecastResult, shouldShowPlot):
   plt.title('Index', color='black')
   plt.legend()
 
-  if (shouldShowPlot == True):
-    plt.show()
-  else:
-    print_figure(plt.gcf())
+  plot_show(shouldShowPlot)
 
 def autocorrelation(df, months, shouldShowPlot):
   aValues = df['value'].to_numpy() # array of data
@@ -46,7 +50,7 @@ def autocorrelation(df, months, shouldShowPlot):
   import statsmodels.api as sm
   # lags = valori su cui calcolare l'autocorrelazione
   sm.graphics.tsa.plot_acf(data.values, lags=2000)
-  plt.show()
+  plot_show(shouldShowPlot)
 
 def sarima(df, months, shouldShowPlot):
   import pmdarima as pm
@@ -65,7 +69,7 @@ def sarima(df, months, shouldShowPlot):
   fitted = model.fit(df)
   yfore = fitted.predict(n_periods=200) # forecast
   ypred = fitted.predict_in_sample()[1:]
-  plot(ForecastResult(df, [], ypred, yfore), True)
+  plot(ForecastResult(df, [], ypred, yfore), shouldShowPlot)
   return ForecastResult(df, [], ypred, yfore)
 
 def sarimax(df, months, shouldShowPlot):
@@ -73,7 +77,7 @@ def sarimax(df, months, shouldShowPlot):
   sarima_model = SARIMAX(df['value'], order=(3,1,1), seasonal_order=(0,0,0,0))
   sfit = sarima_model.fit()
   sfit.plot_diagnostics(figsize=(10, 6))
-  plt.show() # Grafico degli errori, istogramma degli error (migliore quando i residui hanno una distribuzione normale), QQ plot, correlogramma (stagionalità sui residui)
+  plot_show(shouldShowPlot) # Grafico degli errori, istogramma degli error (migliore quando i residui hanno una distribuzione normale), QQ plot, correlogramma (stagionalità sui residui)
 
   # Predizioni in-sample:
   ypred = sfit.predict(start=0,end=len(df))
@@ -81,7 +85,7 @@ def sarimax(df, months, shouldShowPlot):
   plt.plot(ypred)
   plt.xlabel('time')
   plt.ylabel('sales')
-  plt.show()
+  plot_show(shouldShowPlot)
 
   # Previsione out-of-sample (che non conosco)
   forewrap = sfit.get_forecast(steps=200)
@@ -94,106 +98,7 @@ def sarimax(df, months, shouldShowPlot):
 
   plt.plot(forecast_val)
   plt.xlabel('time');plt.ylabel('values')
-  plt.show()
-
-def mlp2(df, months, shouldShowPlot):
-  import pandas as pd, numpy as np
-
-  aValues = df['value'].to_numpy() # array of data
-  logdata = np.log(aValues) # log transform
-  data = pd.Series(logdata).diff() # convert to pandas series and diff transform
-
-  # Preprocessed data
-  # plt.rcParams["figure.figsize"] = (10,8) # redefines figure size
-  plt.plot(data.values);
-  plt.show() # data plot
-
-  from statsmodels.graphics.tsaplots import plot_acf
-
-  # Original Series
-  plt.rcParams.update({'figure.figsize':(9,7), 'figure.dpi':120})
-  fig, axes = plt.subplots(2, 2, sharex=True)
-  axes[0, 0].plot(df['value']);
-  axes[0, 0].set_title('Original Series')
-  plot_acf(df['value'], ax=axes[0, 1], lags=2000)
-
-  # 1st Differencing
-  axes[1, 0].plot(data);
-  axes[1, 0].set_title('1st Order Differencing')
-  plot_acf(data.dropna(), ax=axes[1, 1], lags=2000)
-  plt.show()
-
-  # train and test setm
-  train = data[:-200]
-  test = data[-200:]
-  train[0] = 0
-
-  plt.plot(train.values);
-  plt.plot([None for x in train]+test.values.tolist());
-  plt.show() # data plot
-
-  # reconstruct = np.exp(np.r_[train,test]) # simple recosntruction
-
-  # ------------------------------------------------- neural forecast
-  from keras.preprocessing.sequence import TimeseriesGenerator
-  n_input = 5
-  generator = TimeseriesGenerator(train.values, train.values, length=n_input, batch_size=1)
-
-  from keras.models import Sequential
-  from keras.layers import Dense
-
-  model = Sequential()
-  # lstm_model.add(Dense(30, activation='linear', input_dim=n_input))
-  model.add(Dense(10, activation='relu', input_dim=n_input, input_shape=()))
-  model.add(Dense(1))
-  model.compile(optimizer='adam', loss='mse')
-  model.fit(generator,epochs=3) #epochs=25
-  model.summary()
-
-  # Andamento loss
-  # Ogni volta lavoro su un sottoinsieme di dati quindi può peggiorare
-  # losses_lstm = model.history.history['loss']
-  # plt.xticks(np.arange(0,21,1)) # convergence trace
-  # plt.plot(range(len(losses_lstm)),losses_lstm);
-  # plt.show()
-
-  # Prediction
-  lstm_forecast = list()
-  batch = train.values[-n_input:]  # Metto dentro gli ultimi dati che userò come input per il primo valore previsto
-  curbatch = batch.reshape((1, n_input))  # Creo l'array a partire dalla struttura keras
-  for i in range(len(test)):
-    lstm_pred = model.predict(curbatch)[0]
-    lstm_forecast.append(lstm_pred) # Salvo il valore previsto
-    curbatch = np.append(curbatch[:,1:],[lstm_pred], axis=1) # Rimuovo il valore più vecchio e aggiungo quello appena previsto
-
-  yfore = np.transpose(lstm_forecast).squeeze() # Transpose: da array verticale lo faccio diventare un array orizzontale/"normale"
-
-
-  # evaluate the keras model
-  # accuracy = model.evaluate(generator)
-  # print('Accuracy: %.2f' % (accuracy*100))
-
-  # Forecast
-  lstm_forecast_2 = list()
-  batch = np.array(lstm_forecast)[-n_input:]  # Metto dentro gli ultimi dati che userò come input per il primo valore previsto
-  curbatch = batch.reshape((1, n_input))  # Creo l'array a partire dalla struttura keras
-  for i in range(len(test)):
-    lstm_pred = model.predict(curbatch)[0]
-    lstm_forecast_2.append(lstm_pred) # Salvo il valore previsto
-    curbatch = np.append(curbatch[:,1:],[lstm_pred],axis=1) # Rimuovo il valore più vecchio e aggiungo quello appena previsto
-
-  zfore = np.transpose(lstm_forecast_2).squeeze() # Transpose: da array verticale lo faccio diventare un array orizzontale/"normale"
-
-  # recostruction
-  train[0] = 0
-  exptrain = np.exp(train.cumsum()+logdata[0]) # unlog
-  #yfore[0] = 0
-  exptest = np.exp(yfore.cumsum()+logdata[len(logdata)-201])
-  expfore = np.exp(zfore.cumsum()+logdata[len(logdata)-1])
-  #expfore = np.exp(zfore)
-
-  plot(ForecastResult(df, exptrain, exptest, expfore), True)
-  return ForecastResult(df, exptrain, exptest, expfore)
+  plot_show(shouldShowPlot)
 
 def mlp(df, months, shouldShowPlot):
   import pandas as pd, numpy as np
@@ -205,7 +110,7 @@ def mlp(df, months, shouldShowPlot):
   # Preprocessed data
   # plt.rcParams["figure.figsize"] = (10,8) # redefines figure size
   plt.plot(data.values);
-  plt.show() # data plot
+  plot_show(shouldShowPlot)# data plot
 
   from statsmodels.graphics.tsaplots import plot_acf
 
@@ -220,7 +125,7 @@ def mlp(df, months, shouldShowPlot):
   axes[1, 0].plot(data);
   axes[1, 0].set_title('1st Order Differencing')
   plot_acf(data.dropna(), ax=axes[1, 1], lags=2000)
-  plt.show()
+  plot_show(shouldShowPlot)
 
   # train and test setm
   train = data[:-200]
@@ -229,7 +134,7 @@ def mlp(df, months, shouldShowPlot):
 
   plt.plot(train.values);
   plt.plot([None for x in train]+test.values.tolist());
-  plt.show() # data plot
+  plot_show(shouldShowPlot) # data plot
 
   # reconstruct = np.exp(np.r_[train,test]) # simple recosntruction
 
@@ -254,7 +159,7 @@ def mlp(df, months, shouldShowPlot):
   # losses_lstm = model.history.history['loss']
   # plt.xticks(np.arange(0,21,1)) # convergence trace
   # plt.plot(range(len(losses_lstm)),losses_lstm);
-  # plt.show()
+  # plot_show(shouldShowPlot)
 
   # Prediction
   lstm_forecast = list()
@@ -291,7 +196,7 @@ def mlp(df, months, shouldShowPlot):
   expfore = np.exp(zfore.cumsum()+logdata[len(logdata)-1])
   #expfore = np.exp(zfore)
 
-  plot(ForecastResult(df, exptrain, exptest, expfore), True)
+  plot(ForecastResult(df, exptrain, exptest, expfore), shouldShowPlot)
   return ForecastResult(df, exptrain, exptest, expfore)
 
 def lstm(df, months, shouldShowPlot):
@@ -305,7 +210,7 @@ def lstm(df, months, shouldShowPlot):
   # Preprocessed data
   # plt.rcParams["figure.figsize"] = (10,8) # redefines figure size
   plt.plot(data.values);
-  plt.show() # data plot
+  plot_show(shouldShowPlot) # data plot
 
   # train and test set
   train = data[:-200]
@@ -341,7 +246,7 @@ def lstm(df, months, shouldShowPlot):
   losses_lstm = lstm_model.history.history['loss']
   plt.xticks(np.arange(0,21,1)) # convergence trace
   plt.plot(range(len(losses_lstm)),losses_lstm);
-  plt.show()
+  plot_show(shouldShowPlot)
 
   # Prediction
   lstm_predictions_scaled = list()
@@ -373,7 +278,7 @@ def lstm(df, months, shouldShowPlot):
   expfore = exptest
   #expfore = np.exp(zfore)
 
-  plot(ForecastResult(df, exptrain, exptest, expfore), True)
+  plot(ForecastResult(df, exptrain, exptest, expfore), shouldShowPlot)
   return ForecastResult(df, exptrain, exptest, expfore)
 
 if __name__ == "__main__":
@@ -385,8 +290,10 @@ if __name__ == "__main__":
   print('MAPE Number of arguments:', len(sys.argv))
   print('MAPE Argument List:', str(sys.argv), ' first true arg:',sys.argv[1])
 
-  tec = sys.argv[2] if len(sys. argv) >= 2 else "mlp"
-  shouldShowPlot = len(sys. argv) >= 3 and sys.argv[3] == "show"
+  tec = "mlp"
+  if len(sys.argv) > 2:
+    tec = sys.argv[2]
+  shouldShowPlot = len(sys. argv) > 3 and sys.argv[3] == "show"
 
   dffile = sys.argv[1]
   df = pd.read_csv("../"+dffile, usecols=[0], names=['value'], header=0)

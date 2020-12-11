@@ -24,7 +24,7 @@ namespace SsdWebApi.Controllers
     // [HttpGet] public async Task<ActionResult<List<Quotazione>>> GetAll() => await _context.indici.ToListAsync();
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<string>> Get(int id)
+    public async Task<ActionResult<string>> Get(int id, [FromQuery(Name = "type")] string type)
     {
       if (id > 8) return NotFound();
       string[] indices = new string[] { "id", "Data", "SP_500", "FTSE_MIB", "GOLD_SPOT", "MSCI_EM", "MSCI_EURO", "All_Bonds", "US_Treasury" };
@@ -34,7 +34,7 @@ namespace SsdWebApi.Controllers
 
       // Forecast
       Forecast forecast = new Forecast();
-      res += forecast.forecastSARIMAIndex(index);
+      res += forecast.forecastIndex(index, type);
 
       res += "}";
 

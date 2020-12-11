@@ -1,0 +1,58 @@
+<div class="grid-container">
+  <h1 class="mat-h1">Rest Form</h1>
+  <mat-card>
+    <div>
+      <form [formGroup]="form">
+        <div>
+          <mat-form-field class="mr-2">
+            <mat-label>Id</mat-label> <input matInput type="number" id="txtId" size="10" formControlName="id">
+          </mat-form-field>
+          <mat-form-field class="mr-2">
+            <mat-label>Data</mat-label> <input matInput type="date" id="txtNewAnno" size="10" formControlName="data"><br>
+          </mat-form-field>
+        </div>
+        <div>
+          <mat-form-field class="mr-2">
+            <mat-label>SP 500</mat-label> <input matInput type="number" id="txtSP_500" formControlName="SP_500">
+          </mat-form-field>
+          <mat-form-field class="mr-2">
+            <mat-label>FTSE MIB</mat-label> <input matInput type="number" id="txtFTSE_MIB" formControlName="FTSE_MIB">
+          </mat-form-field>
+          <mat-form-field class="mr-2">
+            <mat-label>GOLD SPOT</mat-label> <input matInput type="number" id="txtGOLD_SPOT" formControlName="GOLD_SPOT">
+          </mat-form-field>
+          <mat-form-field class="mr-2">
+            <mat-label>MSCI EM</mat-label> <input matInput type="number" id="txtMSCI_EM" formControlName="MSCI_EM">
+        </mat-form-field>
+      </div>
+      <div>
+        <mat-form-field class="mr-2">
+          <mat-label>MSCI EURO</mat-label> <input matInput type="number" id="txtMSCI_EURO" formControlName="MSCI_EURO">
+        </mat-form-field>
+        <mat-form-field class="mr-2">
+          <mat-label>All Bonds</mat-label> <input matInput type="number" id="txtAll_Bonds" formControlName="All_Bonds">
+        </mat-form-field>
+        <mat-form-field class="mr-2">
+          <mat-label>US Treasury</mat-label> <input matInput type="number" id="txtUS_Treasury" formControlName="US_Treasury">
+        </mat-form-field>
+      </div>
+      </form>
+    </div>
+    <div>
+      <button mat-raised-button color="primary" (click)="findAll()" class="d-inline-block mr-2">Read all</button>
+      <button mat-raised-button color="primary" (click)="findById()" class="d-inline-block mr-2">Read by id</button>
+      <button mat-raised-button (click)="create()" class="d-inline-block mr-2">Create</button>
+      <button mat-raised-button (click)="updateById()" class="d-inline-block mr-2">Update</button>
+      <button mat-raised-button color="warn" (click)="deleteById()" class="d-inline-block mr-2">Delete</button>
+    </div>
+  </mat-card>
+  <!-- <div>
+    <textarea id="txtarea" rows="8" cols="50" [value]="latestResult$ | async | json"> </textarea>
+  </div> -->
+  <mat-card>
+    <div>
+      Risultato chiamata:
+      <pre id="risultatoChiamata" style="max-height: 70vh; overflow-y: scroll;">{{ latestResult$ | async | json }}</pre>
+    </div>
+  </mat-card>
+</div>

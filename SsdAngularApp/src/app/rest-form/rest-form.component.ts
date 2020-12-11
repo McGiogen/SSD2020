@@ -5,11 +5,11 @@ import { Quotazione } from '../model/quotazione';
 import { QuotazioneService } from '../services/proxies/quotazione.service';
 
 @Component({
-  selector: 'app-home',
-  templateUrl: './home.component.html',
-  styleUrls: ['./home.component.css']
+  selector: 'app-rest-form',
+  templateUrl: './rest-form.component.html',
+  styleUrls: ['./rest-form.component.css']
 })
-export class HomeComponent implements OnInit {
+export class RestFormComponent implements OnInit {
 
   latestResult$ = new BehaviorSubject<unknown>(null);
 
