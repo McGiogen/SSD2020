@@ -10,6 +10,7 @@ namespace SsdWebApi.Services
       int dimensions = 0;
       double xmin = 0, xmax = 0;
       Func<double[], double> calculateFitness = null;
+      int iters = 1000;
 
       if (idTest == 1) {
         dimensions = 20;
@@ -20,10 +21,10 @@ namespace SsdWebApi.Services
         dimensions = 30;
         xmin = -2048;
         xmax = 2048;
+        iters = 2000;
         calculateFitness = PSOHandler.rosenbrock;
       }
 
-      int iters = 1000;
       int numNeighbours = 5;
       int numParticels = 50;
 
