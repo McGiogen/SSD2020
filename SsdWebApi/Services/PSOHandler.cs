@@ -15,12 +15,12 @@ namespace SsdWebApi.Services
         dimensions = 20;
         xmin = -100;
         xmax = 100;
-        calculateFitness = PSO.paraboloid;
+        calculateFitness = PSOHandler.paraboloid;
       } else if (idTest == 2) {
         dimensions = 30;
         xmin = -2048;
         xmax = 2048;
-        calculateFitness = PSO.rosenbrock;
+        calculateFitness = PSOHandler.rosenbrock;
       }
 
       int iters = 1000;
@@ -31,6 +31,24 @@ namespace SsdWebApi.Services
       pso.calculate(numParticels, dimensions, iters, numNeighbours);
 
       return pso;
+    }
+
+    static public double paraboloid(double[] xvec)
+    {
+      double sum = 0;
+      int i;
+      for (i = 0; i < xvec.Length; i++)
+        sum += Math.Pow(xvec[i], 2);
+      return -sum;
+    }
+
+    static public double rosenbrock(double[] xvec)
+    {
+      double sum = 0;
+      int i, dim = xvec.Length;
+      for (i = 0; i < dim - 1; i++)
+        sum += 100 * Math.Pow((xvec[i + 1] - Math.Pow(xvec[i], 2)), 2) + Math.Pow((1 - xvec[i]), 2);
+      return -sum;
     }
 
   }

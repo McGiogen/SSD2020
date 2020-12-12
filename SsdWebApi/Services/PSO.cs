@@ -34,14 +34,15 @@ namespace SsdWebApi.Services
       {
         // position and velocity
         var dimensionsRange = Enumerable.Range(0, dimensions);
-        particle.value = dimensionsRange.Select(i => rnd.NextDouble() * (maxValue - minValue) - minValue).ToArray();
-        particle.velocity = dimensionsRange.Select(i => (rnd.NextDouble() - rnd.NextDouble()) * 0.5 * (maxValue - minValue) - minValue).ToArray();
+        particle.value = dimensionsRange.Select(i => rnd.NextDouble() * (maxValue - minValue) + minValue).ToArray();
+        particle.velocity = dimensionsRange.Select(i => (rnd.NextDouble() - rnd.NextDouble()) * 0.5 * (maxValue - minValue)).ToArray();
         particle.personalBest = dimensionsRange.Select(i => particle.value[i]).ToArray();
         particle.localBest = dimensionsRange.Select(i => particle.value[i]).ToArray();
 
         // fit
         particle.fit = calculateFitness(particle.value);
         particle.fitPersonalBest = particle.fit;
+        particle.fitLocalBest = particle.fitPersonalBest;
 
         // neighbours
         particle.neighbours = new int[numNeighbours];
@@ -50,7 +51,7 @@ namespace SsdWebApi.Services
           do
           {
             id = rnd.Next(numParticels);
-          } while (Array.IndexOf(particle.neighbours, id) == -1);
+          } while (Array.IndexOf(particle.neighbours, id) != -1);
           particle.neighbours[i] = id;
         }
       }
@@ -96,13 +97,14 @@ namespace SsdWebApi.Services
               }
 
               // Local best
-              particle.fitLocalBest = particle.fitPersonalBest;
+              particle.fitLocalBest = Double.MinValue;
               foreach (int neighbourId in particle.neighbours)
               {
                 Particle neighbour = particles[neighbourId];
                 if (neighbour.fit > particle.fitLocalBest)
                 {
                   particle.fitLocalBest = neighbour.fit;
+                  Array.Copy(neighbour.value, particle.localBest, neighbour.value.Length);
                 }
               }
 
@@ -117,24 +119,6 @@ namespace SsdWebApi.Services
         }
       }
       return fitGlobalBest;
-    }
-
-    static public double paraboloid(double[] xvec)
-    {
-      double sum = 0;
-      int i;
-      for (i = 0; i < xvec.Length; i++)
-        sum += Math.Pow(xvec[i], 2);
-      return -sum;
-    }
-
-    static public double rosenbrock(double[] xvec)
-    {
-      double sum = 0;
-      int i, dim = xvec.Length;
-      for (i = 0; i < dim - 1; i++)
-        sum += 100 * Math.Pow((xvec[i + 1] - Math.Pow(xvec[i], 2)), 2) + Math.Pow((1 - xvec[i]), 2);
-      return -sum;
     }
   }
 }
