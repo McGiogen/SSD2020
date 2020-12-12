@@ -1,6 +1,6 @@
 <div class="grid-container">
   <h1 class="mat-h1">Previsione</h1>
-  <mat-card>
+  <mat-card class="mb-2">
     <mat-card-header>
       <mat-card-title>
         Parametri
@@ -30,7 +30,7 @@
 
   <ng-container *ngIf="result$ | async as result">
 
-    <mat-card>
+    <mat-card class="mb-2">
       <mat-card-header>
         <mat-card-title>
           Grafici
@@ -40,14 +40,15 @@
         <div *ngFor="let img of result.img"><img [src]="'data:image/png;base64,' + img" style="max-width: 100%"></div>
       </mat-card-content>
     </mat-card>
-    <mat-card>
+
+    <mat-card class="mb-2">
       <mat-card-header>
         <mat-card-title>
           Log
         </mat-card-title>
       </mat-card-header>
       <mat-card-content class="dashboard-card-content">
-        <pre style="white-space: pre-wrap;">{{ result.text | json }}</pre>
+        <pre style="white-space: pre-wrap; text-align: left;">{{ result.text }}</pre>
       </mat-card-content>
     </mat-card>
   </ng-container>

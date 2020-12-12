@@ -10,8 +10,8 @@ namespace SsdWebApi.Models
 
     }
 
-    public string forecastIndex(string index, string type) {
-      string res = "\"text\": \"";
+    public ForecastResult forecastIndex(string index, string type) {
+      ForecastResult res = new ForecastResult();
       string interpreter = @"/usr/bin/python3";
       string environment = "";
       int timeout = 5000;
@@ -32,10 +32,10 @@ namespace SsdWebApi.Models
         foreach (string s in lines) {
           if (s.StartsWith("MAPE")) {
             Console.WriteLine(s);
-            res += s + "\\n";
+            res.text += s + Environment.NewLine;
           }
           if (s.StartsWith("b'")) {
-            strBitmapArray.Add("\"" + s.Trim().Substring(2, s.Length - 3) + "\"");
+            strBitmapArray.Add(s.Trim().Substring(2, s.Length - 3));
             Console.WriteLine("Image found");
           }
           if (s.StartsWith("Actual")) {
@@ -43,9 +43,7 @@ namespace SsdWebApi.Models
             Console.WriteLine(fcast);
           }
         }
-
-        string strBitmap = String.Join(",", strBitmapArray.ToArray());
-        res += $"\", \"img\": [{strBitmap}]";
+        res.img = strBitmapArray.ToArray();
       } catch (Exception e) {
         Console.WriteLine(e.ToString());
       }

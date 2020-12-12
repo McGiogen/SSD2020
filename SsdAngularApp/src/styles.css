@@ -6,6 +6,9 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 .mr-2 {
   margin-right: 8px !important;
 }
+.mb-2 {
+  margin-bottom: 8px !important;
+}
 
 .d-inline-block {
   display: inline-block;
