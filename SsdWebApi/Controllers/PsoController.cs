@@ -27,14 +27,6 @@ namespace SsdWebApi.Controllers
     public async Task<ActionResult<double[]>> Get(int id)
     {
       return PSOHandler.start(id).globalBest;
-
-      // if (id > 8) return NotFound();
-      // string[] indices = new string[] { "id", "Data", "SP_500", "FTSE_MIB", "GOLD_SPOT", "MSCI_EM", "MSCI_EURO", "All_Bonds", "US_Treasury" };
-      // string index = indices[id];
-
-      // // Forecast
-      // Forecast forecast = new Forecast();
-      // return forecast.forecastIndex(index, type);
     }
   }
 }

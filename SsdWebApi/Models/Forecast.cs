@@ -30,7 +30,7 @@ namespace SsdWebApi.Models
         List<string> strBitmapArray= new List<string>();
 
         foreach (string s in lines) {
-          if (s.StartsWith("MAPE")) {
+          if (s.StartsWith("LOG ")) {
             Console.WriteLine(s);
             res.text += s + Environment.NewLine;
           }
@@ -38,9 +38,15 @@ namespace SsdWebApi.Models
             strBitmapArray.Add(s.Trim().Substring(2, s.Length - 3));
             Console.WriteLine("Image found");
           }
-          if (s.StartsWith("Actual")) {
-            double fcast = Convert.ToDouble(s.Substring(s.LastIndexOf(" ")));
-            Console.WriteLine(fcast);
+          if (s.StartsWith("REVENUE ")) {
+            Console.WriteLine(s);
+            res.text += s + Environment.NewLine;
+            res.revenue = Convert.ToDouble(s.Trim().Substring(s.Trim().IndexOf(" ")));
+          }
+          if (s.StartsWith("RISK ")) {
+            Console.WriteLine(s);
+            res.text += s + Environment.NewLine;
+            res.risk = Convert.ToDouble(s.Trim().Substring(s.Trim().IndexOf(" ")));
           }
         }
         res.img = strBitmapArray.ToArray();
