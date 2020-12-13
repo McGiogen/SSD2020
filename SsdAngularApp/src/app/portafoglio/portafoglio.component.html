@@ -1,24 +1,62 @@
 <div class="grid-container">
   <h1 class="mat-h1">Portafoglio</h1>
-  <mat-grid-list cols="2" rowHeight="350px">
-    <mat-grid-tile [colspan]="1" [rowspan]="1">
-      <mat-card class="dashboard-card">
+  <mat-card class="mb-2">
+    <mat-card-header>
+      <mat-card-title>
+        Parametri
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="calcolaPortafoglio()">
+        <mat-form-field>
+          <mat-label>Tipo</mat-label>
+          <mat-select formControlName="type">
+            <mat-option *ngFor="let type of types" [value]="type">{{type}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <br>
+        <button mat-raised-button color="primary" type="submit">Calcola portafoglio</button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <div [hidden]="!loading"><mat-spinner style="margin: 0 auto;"></mat-spinner></div>
+
+  <ng-container *ngIf="result$ | async as result">
+    <mat-card class="mb-2">
+      <mat-card-header>
+        <mat-card-title>
+          Portfolio
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content class="dashboard-card-content">
+        <pre style="text-align: left;">{{ result.portfolio | json }}</pre>
+      </mat-card-content>
+    </mat-card>
+
+    <ng-container *ngFor="let images of result.img; let i = index">
+      <mat-card class="mb-2">
         <mat-card-header>
           <mat-card-title>
-            Test
-            <button mat-icon-button class="more-button" [matMenuTriggerFor]="menu" aria-label="Toggle menu">
-              <mat-icon>more_vert</mat-icon>
-            </button>
-            <mat-menu #menu="matMenu" xPosition="before">
-              <button mat-menu-item>Expand</button>
-              <button mat-menu-item>Remove</button>
-            </mat-menu>
+            Grafici {{indexes[i]}}
           </mat-card-title>
         </mat-card-header>
         <mat-card-content class="dashboard-card-content">
-          <div>Card Content Here</div>
+          <div *ngFor="let img of images"><img [src]="'data:image/png;base64,' + img" style="max-width: 100%"></div>
         </mat-card-content>
       </mat-card>
-    </mat-grid-tile>
-  </mat-grid-list>
+    </ng-container>
+    <ng-container *ngFor="let log of result.text; let i = index">
+      <mat-card class="mb-2">
+        <mat-card-header>
+          <mat-card-title>
+            Log {{indexes[i]}}
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="dashboard-card-content">
+          <pre style="white-space: pre-wrap; text-align: left;">{{ log }}</pre>
+        </mat-card-content>
+      </mat-card>
+    </ng-container>
+  </ng-container>
 </div>

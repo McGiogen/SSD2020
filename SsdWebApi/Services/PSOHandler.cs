@@ -75,14 +75,6 @@ namespace SsdWebApi.Services
       };
     }
 
-    static public double indiciCombinazioneLineare(double[] xvec) {
-      double sum = 0;
-      int i;
-      for (i = 0; i < xvec.Length; i++)
-        sum += Math.Pow(xvec[i], 2);
-      return -sum;
-    }
-
     static public Action<Particle> adeguateLimitsPerDimension(double minValue, double maxValue) {
       return (Particle particle) => {
         foreach (int d in Enumerable.Range(0, particle.value.Length))

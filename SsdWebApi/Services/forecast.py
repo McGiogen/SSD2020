@@ -72,12 +72,13 @@ def sarima(df, train, test, shouldShowPlot):
   model = pm.auto_arima(train, start_p=1, start_q=1, # intervalli validi di p, q, P, Q
                     test='adf', max_p=3, max_q=3, m=1, # stagionalità = 4
                     start_P=0, seasonal=False,
-                    d=1, D=0, trace=True, # FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME FIXME
+                    d=None, D=0, trace=True,
                     error_action='ignore',
                     suppress_warnings=True,
                     stepwise=True) # False full grid
 
   print(model.summary()) # stampa i test statistici di affidabilità
+  print('LOG Sarima parameters:', model.order)
 
   # morder = model.order
   # mseasorder = model.seasonal_order
