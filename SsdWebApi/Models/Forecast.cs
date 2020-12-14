@@ -1,6 +1,7 @@
 using System;
 using SsdWebApi.Services;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace SsdWebApi.Models
 {
@@ -35,18 +36,18 @@ namespace SsdWebApi.Models
             res.text += s + Environment.NewLine;
           }
           if (s.StartsWith("b'")) {
-            strBitmapArray.Add(s.Trim().Substring(2, s.Length - 3));
+            strBitmapArray.Add(s.Trim().Substring(s.IndexOf("'") + 1, s.Length - (s.Length - s.LastIndexOf("'")) - s.IndexOf("'") - 1));
             Console.WriteLine("Image found");
           }
           if (s.StartsWith("REVENUE ")) {
             Console.WriteLine(s);
             res.text += s + Environment.NewLine;
-            res.revenue = Convert.ToDouble(s.Trim().Substring(s.Trim().IndexOf(" ")));
+            res.revenue = Convert.ToDouble(s.Trim().Substring(s.Trim().IndexOf(" ") + 1), CultureInfo.InvariantCulture);
           }
           if (s.StartsWith("RISK ")) {
             Console.WriteLine(s);
             res.text += s + Environment.NewLine;
-            res.risk = Convert.ToDouble(s.Trim().Substring(s.Trim().IndexOf(" ")));
+            res.risk = Convert.ToDouble(s.Trim().Substring(s.Trim().IndexOf(" ") + 1), CultureInfo.InvariantCulture);
           }
         }
         res.img = strBitmapArray.ToArray();
