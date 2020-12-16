@@ -41,12 +41,12 @@ def plot(forecastResult, shouldShowPlot):
   plt.plot(forecastResult.dataset['value'], 'black', label = 'History')
   plt.plot(forecastResult.train, 'blue', label='Prediction')
   # A fini grafici aggiungo anche l'ultimo valore del train-set all'inizio della serie
-  plt.plot([None for x in forecastResult.train[:-1]]+[x for x in forecastResult.train[-1:]]+[x for x in forecastResult.forecast], 'red', label='Forecast')
+  plt.plot([None for x in forecastResult.train[:-1]]+[forecastResult.dataset['value'][forecastResult.train.size-1]]+[x for x in forecastResult.forecast], 'red', label='Forecast')
 
-  #if forecast_ci != None:
-  #  plt.fill_between(forecast_ci.index,
-  #                   forecast_ci.iloc[:, 0],
-  #                   forecast_ci.iloc[:, 1], color='k', alpha=.25)
+  if forecast_ci != None:
+    plt.fill_between(forecast_ci.index,
+                     forecast_ci.max,
+                     forecast_ci.min, color='k', alpha=.25)
   plt.xlabel('time')
   plt.ylabel('value')
   plt.title('Index', color='black')
@@ -85,9 +85,12 @@ def sarima(train, forecastSize, shouldShowPlot):
   # mseasorder = model.seasonal_order
 
   fitted = model.fit(train)
-  yfore = fitted.predict(n_periods=forecastSize) # forecast
-  # Rimuove il primo valore perché zero
-  ypred = fitted.predict_in_sample()[1:]
+  
+  # Predizioni in-sample
+  ypred = fitted.predict_in_sample()[1:] # Rimuove il primo valore perché zero
+  
+  # Previsione out-of-sample
+  yfore = fitted.predict(n_periods=forecastSize)
 
   return ForecastResult(ypred, yfore)
 
@@ -100,10 +103,10 @@ def sarimax(train, forecastSize, shouldShowPlot):
   sfit.plot_diagnostics(figsize=(10, 8))
   plot_show(shouldShowPlot)
 
-  # Predizioni in-sample:
-  ypred = sfit.predict(start=0,end=train.size)
+  # Predizioni in-sample
+  ypred = sfit.predict(start=0,end=train.size)[1:] # Rimuove il primo valore perché zero
 
-  # Previsione out-of-sample (che non conosco)
+  # Previsione out-of-sample
   forewrap = sfit.get_forecast(steps=forecastSize)
   forecast_ci = forewrap.conf_int() # Intervalli di confidenza, più sono ampi e meno affidabile è la previsione
   forecast_val = forewrap.predicted_mean # Valori previsti
@@ -150,11 +153,12 @@ def mlp(trainToDiff, forecastSize, shouldShowPlot):
   plt.rcParams["figure.figsize"] = (10,8) # redefines figure size
   plot_show(shouldShowPlot)
   
-  # Prediction
-  lstm_predict = model.predict(generator, batch_size=n_input)
+  # Predizioni in-sample
+  #lstm_predict = model.predict(generator, batch_size=n_input)
   
-  ypred = np.transpose(lstm_predict).squeeze()
-  ypred = ypred.cumsum() + trainToDiff.values[n_input-1]
+  #ypred = np.transpose(lstm_predict).squeeze()
+  #ypred = ypred.cumsum() + trainToDiff.values[n_input-1]
+  ypred = [0 for x in trainToDiff]
 
   # Forecast
   lstm_forecast = list()
@@ -216,12 +220,13 @@ def lstm(trainToDiff, forecastSize, shouldShowPlot):
   plt.rcParams["figure.figsize"] = (10,8) # redefines figure size
   plot_show(shouldShowPlot)
   
-  # Prediction
-  lstm_predict_scaled = lstm_model.predict(scaled_train_data, batch_size=n_input)
+  # Predizioni in-sample
+  #lstm_predict_scaled = lstm_model.predict(scaled_train_data, batch_size=n_input)
   
-  lstm_predict = scaler.inverse_transform(lstm_predict_scaled)
-  ypred = np.transpose(lstm_predict).squeeze()
-  ypred = ypred.cumsum() + trainToDiff.values[n_input-1]
+  #lstm_predict = scaler.inverse_transform(lstm_predict_scaled)
+  #ypred = np.transpose(lstm_predict).squeeze()
+  #ypred = ypred.cumsum() + trainToDiff.values[n_input-1]
+  ypred = [0 for x in trainToDiff]
 
   # Forecast
   lstm_forecast_scaled = list()
@@ -307,9 +312,10 @@ if __name__ == "__main__":
   exptrain = np.exp(res.train) # unlog
   expfore = np.exp(res.forecast)
   forecast_ci = res.forecast_ci
-  #if (forecast_ci != None):
-  #  forecast_ci = ForecastCi(forecast_ci.index, np.exp(forecast_ci.max+logdata[len(logdata)-cutpoint-1]), np.exp(forecast_ci.min.cumsum()+logdata[len(logdata)-cutpoint-1]))
+  if (forecast_ci != None):
+    forecast_ci = ForecastCi(forecast_ci.index, np.exp(forecast_ci.max), np.exp(forecast_ci.min))
   res = ForecastResult(exptrain, expfore, forecast_ci, df)
+    
 
   plot(res, shouldShowPlot)
 
