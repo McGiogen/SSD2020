@@ -6,10 +6,10 @@ namespace SsdWebApi.Services
 {
   public class PSOHandler
   {
-    public static PSO start(int idTest, double[] indexesRevenue = null, double[] indexesRisk = null) {
+    public static PSO start(int id, double[] indexesRevenue = null, double[] indexesRisk = null) {
       // double res = double.MinValue;
       int dimensions = 0;
-      double vMin = 0, vMax = 0;
+      double valueMin = 0, valueMax = 0, velocityMin = 0, velocityMax = 0;
       Func<double[], double> calculateFitness = null;
       Action<Particle> adeguateLimits = null;
       int iters = 1000;
@@ -17,30 +17,34 @@ namespace SsdWebApi.Services
       int numNeighbours = 5;
       int numParticels = 50;
 
-      if (idTest == 1) {
+      double c0 = 0.25, c1 = 1.5, c2 = 2.0;
+
+      if (id == 1) {
         dimensions = 20;
-        vMin = -100;
-        vMax = 100;
+        valueMin = velocityMin = -100;
+        valueMax = velocityMax = 100;
         calculateFitness = PSOHandler.paraboloid;
-        adeguateLimits = PSOHandler.adeguateLimitsPerDimension(vMin, vMax);
-      } else if (idTest == 2) {
+        adeguateLimits = PSOHandler.adeguateLimitsPerDimension(valueMin, valueMax);
+      } else if (id == 2) {
         dimensions = 30;
-        vMin = -2048;
-        vMax = 2048;
+        valueMin = velocityMin = -2048;
+        valueMax = velocityMax = 2048;
         iters = 2000;
         calculateFitness = PSOHandler.rosenbrock;
-        adeguateLimits = PSOHandler.adeguateLimitsPerDimension(vMin, vMax);
+        adeguateLimits = PSOHandler.adeguateLimitsPerDimension(valueMin, valueMax);
       } else {
         if (indexesRevenue == null || indexesRisk == null) throw new Exception("indexesRevenue and indexesRisk cannot be null");
         dimensions = 7;
-        vMin = 5;
-        vMax = (100 - vMin*dimensions)/dimensions * 2 + vMin;
+        valueMin = 5;
+        valueMax = (100 - valueMin*dimensions) * 2/dimensions + valueMin;
+        velocityMin = 0;
+        velocityMax = 5;
         iters = 2000;
         calculateFitness = PSOHandler.indexesFitness(indexesRevenue, indexesRisk);
         adeguateLimits = PSOHandler.adeguateLimitsPerc(5);
       }
 
-      PSO pso = new PSO(0.25, 1.5, 2.0, vMin, vMax, calculateFitness, adeguateLimits);
+      PSO pso = new PSO(c0, c1, c2, valueMin, valueMax, velocityMin, velocityMax, calculateFitness, adeguateLimits);
       pso.calculate(numParticels, dimensions, iters, numNeighbours);
 
       return pso;
@@ -69,8 +73,11 @@ namespace SsdWebApi.Services
       return (double[] xvec) => {
         double sum = 0;
         int i, dim = xvec.Length;
+        // Con la divisione si comparano meglio guadagni e rischi alti con guadagni e rischi bassi
+        // Con la potenza si ottiene sempre un valore del rischio positivo (per non modificare il segno di revenue)
+        // e si da minor valore alle ricompense ad alto rischio (revenue aumenta in maniera lineare mentre risk in maniera esponenziale)
         for (i = 0; i < dim - 1; i++)
-          sum += revenue[i] - risk[i];
+          sum += revenue[i]*xvec[i] / Math.Pow(risk[i]*xvec[i], 2);
         return sum;
       };
     }
@@ -114,7 +121,7 @@ namespace SsdWebApi.Services
         }
 
         // Aggiunge il limite minimo - minPerc
-        Array.Copy(particle.value, values.Select(v => v + 5).ToArray(), dimensions);
+        Array.Copy(values.Select(v => v + 5).ToArray(), particle.value, dimensions);
       };
     }
   }

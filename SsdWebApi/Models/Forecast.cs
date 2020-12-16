@@ -44,10 +44,20 @@ namespace SsdWebApi.Models
             res.text += s + Environment.NewLine;
             res.revenue = Convert.ToDouble(s.Trim().Substring(s.Trim().IndexOf(" ") + 1), CultureInfo.InvariantCulture);
           }
-          if (s.StartsWith("RISK ")) {
+          if (s.StartsWith("REVENUE_PERC ")) {
             Console.WriteLine(s);
             res.text += s + Environment.NewLine;
-            res.risk = Convert.ToDouble(s.Trim().Substring(s.Trim().IndexOf(" ") + 1), CultureInfo.InvariantCulture);
+            res.revenuePerc = Convert.ToDouble(s.Trim().Substring(s.Trim().IndexOf(" ") + 1), CultureInfo.InvariantCulture);
+          }
+          if (s.StartsWith("MAPE ")) {
+            Console.WriteLine(s);
+            res.text += s + Environment.NewLine;
+            res.mape = Convert.ToDouble(s.Trim().Substring(s.Trim().IndexOf(" ") + 1), CultureInfo.InvariantCulture);
+          }
+          if (s.StartsWith("VAR ")) {
+            Console.WriteLine(s);
+            res.text += s + Environment.NewLine;
+            res.valueAtRisk = Convert.ToDouble(s.Trim().Substring(s.Trim().IndexOf(" ") + 1), CultureInfo.InvariantCulture);
           }
         }
         res.img = strBitmapArray.ToArray();

@@ -7,19 +7,21 @@ namespace SsdWebApi.Services
   public class PSO
   {
     public double c0, c1, c2;
-    public double vMax, vMin;
+    public double valueMin, valueMax, velocityMin, velocityMax;
     public double fitGlobalBest;
     public double[] globalBest;
     public Func<double[], double> calculateFitness;
     public Action<Particle> adeguateLimits;
 
-    public PSO(double c0, double c1, double c2, double vMin, double vMax, Func<double[], double> calculateFitness, Action<Particle> adeguateLimits)
+    public PSO(double c0, double c1, double c2, double valueMin, double valueMax, double velocityMin, double velocityMax, Func<double[], double> calculateFitness, Action<Particle> adeguateLimits)
     {
       this.c0 = c0;
       this.c1 = c1;
       this.c2 = c2;
-      this.vMin = vMin;
-      this.vMax = vMax;
+      this.valueMin = valueMin;
+      this.valueMax = valueMax;
+      this.velocityMin = velocityMin;
+      this.velocityMax = velocityMax;
       this.fitGlobalBest = double.MinValue;
       this.calculateFitness = calculateFitness;
       this.adeguateLimits = adeguateLimits;
@@ -36,8 +38,8 @@ namespace SsdWebApi.Services
       {
         // position and velocity
         var dimensionsRange = Enumerable.Range(0, dimensions);
-        particle.value = dimensionsRange.Select(i => rnd.NextDouble() * (vMax - vMin) + vMin).ToArray();
-        particle.velocity = dimensionsRange.Select(i => (rnd.NextDouble() - rnd.NextDouble()) * 0.5 * (vMax - vMin)).ToArray();
+        particle.value = dimensionsRange.Select(i => rnd.NextDouble() * (valueMax - valueMin) + valueMin).ToArray();
+        particle.velocity = dimensionsRange.Select(i => (rnd.NextDouble() - rnd.NextDouble()) * 0.5 * (velocityMax - velocityMin)).ToArray();
         particle.personalBest = dimensionsRange.Select(i => particle.value[i]).ToArray();
         particle.localBest = dimensionsRange.Select(i => particle.value[i]).ToArray();
 
@@ -60,7 +62,7 @@ namespace SsdWebApi.Services
 
       foreach (int iter in Enumerable.Range(0, iters))
       {
-        Console.WriteLine($"Ciclo {iter}, best result {fitGlobalBest}");
+        // Console.WriteLine($"Ciclo {iter}, best result {fitGlobalBest}");
 
         // Update all particles
         foreach (Particle particle in particles)
@@ -107,6 +109,7 @@ namespace SsdWebApi.Services
             {
               fitGlobalBest = particle.fit;
               Array.Copy(particle.value, globalBest, particle.value.Length);
+              Console.WriteLine($"Ciclo {iter}, best result {fitGlobalBest}");
             }
           }
         }

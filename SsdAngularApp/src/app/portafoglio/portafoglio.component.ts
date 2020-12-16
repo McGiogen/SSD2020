@@ -12,9 +12,11 @@ import { Observable } from 'rxjs';
 export class PortafoglioComponent {
   indexes = ['SP_500', 'FTSE_MIB', 'GOLD_SPOT', 'MSCI_EM', 'MSCI_EURO', 'All_Bonds', 'US_Treasury']
   types = ['mlp', 'lstm', 'sarima', 'sarimax'];
+  risks = ['var', 'mape'];
 
   form = new FormGroup({
-    type: new FormControl('mlp'),
+    type: new FormControl(this.types[0]),
+    risk: new FormControl(this.risks[0]),
   });
 
   result$: Observable<any>;

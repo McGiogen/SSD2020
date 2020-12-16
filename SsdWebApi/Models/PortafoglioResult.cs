@@ -25,19 +25,19 @@ namespace SsdWebApi.Models
   public class Portfolio
   {
     public int horizon { get; set; }
-    [JsonPropertyName("SP_500")]
+    [JsonPropertyName("S&P_500_INDEX")]
     public double SP_500 { get; set; }
-    [JsonPropertyName("FTSE_MIB")]
+    [JsonPropertyName("FTSE_MIB_INDEX")]
     public double FTSE_MIB { get; set; }
-    [JsonPropertyName("GOLD_SPOT")]
+    [JsonPropertyName("GOLD_SPOT_$_OZ")]
     public double GOLD_SPOT { get; set; }
     [JsonPropertyName("MSCI_EM")]
     public double MSCI_EM { get; set; }
     [JsonPropertyName("MSCI_EURO")]
     public double MSCI_EURO { get; set; }
-    [JsonPropertyName("All_Bonds")]
+    [JsonPropertyName("All_Bonds_TR")]
     public double All_Bonds { get; set; }
-    [JsonPropertyName("US_Treasury")]
+    [JsonPropertyName("U.S._Treasury")]
     public double US_Treasury { get; set; }
   }
 }
