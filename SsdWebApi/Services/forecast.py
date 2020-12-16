@@ -1,16 +1,17 @@
 import numpy as np, pandas as pd
 import matplotlib.pyplot as plt
 import os, sys, io, base64
+from statsmodels.graphics.tsaplots import plot_acf
 
 # Startup config
 np.random.seed(550) # for reproducibility
 
 class ForecastResult:
-  def __init__(self, dataset, train, forecast, forecast_ci=None):
-    self.dataset = dataset
+  def __init__(self, train, forecast, forecast_ci=None, dataset=None):
     self.train = train
     self.forecast = forecast
     self.forecast_ci = forecast_ci
+    self.dataset = dataset
 
 class ForecastCi:
   def __init__(self, ciIndex, ciMin, ciMax):
@@ -36,10 +37,11 @@ def plot_show(shouldShowPlot):
     plt.clf()
 
 def plot(forecastResult, shouldShowPlot):
+  plt.rcParams["figure.figsize"] = (10,8) # redefines figure size
   plt.plot(forecastResult.dataset['value'], 'black', label = 'History')
-  plt.plot(forecastResult.train,label='Train')
-  plt.plot([None for x in forecastResult.train]+[x for x in forecastResult.forecast], label='Forecast')
-  #plt.plot([None for x in forecastResult.train]+[None for x in forecastResult.test]+[x for x in forecastResult.forecast], label='Forecast')
+  plt.plot(forecastResult.train, 'blue', label='Prediction')
+  # A fini grafici aggiungo anche l'ultimo valore del train-set all'inizio della serie
+  plt.plot([None for x in forecastResult.train[:-1]]+[x for x in forecastResult.train[-1:]]+[x for x in forecastResult.forecast], 'red', label='Forecast')
 
   #if forecast_ci != None:
   #  plt.fill_between(forecast_ci.index,
@@ -61,15 +63,15 @@ def autocorrelation(df, months, shouldShowPlot):
   # analisi dei dati con diagramma di autocorrelazione
   import statsmodels.api as sm
   # lags = valori su cui calcolare l'autocorrelazione
-  sm.graphics.tsa.plot_acf(data.values, lags=2000)
+  sm.graphics.tsa.plot_acf(data.values, lags=600)
   plt.title("ACF - Autocorrelation function", color='black')
+  plt.rcParams["figure.figsize"] = (10,8) # redefines figure size
   plot_show(shouldShowPlot)
 
-def sarima(df, train, forecastSize, shouldShowPlot):
+def sarima(train, forecastSize, shouldShowPlot):
   import pmdarima as pm
-  #del df['period']
   model = pm.auto_arima(train, start_p=1, start_q=1, # intervalli validi di p, q, P, Q
-                    test='adf', max_p=3, max_q=3, m=1, # stagionalità = 4
+                    test='adf', max_p=3, max_q=3, m=1, # m = stagionalità
                     start_P=0, seasonal=False,
                     d=None, D=0, trace=True,
                     error_action='ignore',
@@ -77,25 +79,25 @@ def sarima(df, train, forecastSize, shouldShowPlot):
                     stepwise=True) # False full grid
 
   print(model.summary()) # stampa i test statistici di affidabilità
-  print('LOG Sarima parameters:', model.order)
+  print('LOG Sarima parameters:', model.order, '(0, 0, 0) [0]')
 
   # morder = model.order
   # mseasorder = model.seasonal_order
 
   fitted = model.fit(train)
   yfore = fitted.predict(n_periods=forecastSize) # forecast
-  #################### TODO verifica la riga sotto se era valida ####################################
+  # Rimuove il primo valore perché zero
   ypred = fitted.predict_in_sample()[1:]
 
-  return ForecastResult(df, ypred, yfore)
+  return ForecastResult(ypred, yfore)
 
-def sarimax(df, train, forecastSize, shouldShowPlot):
+def sarimax(train, forecastSize, shouldShowPlot):
   from statsmodels.tsa.statespace.sarimax import SARIMAX
-  sarima_model = SARIMAX(train, order=(3,1,1), seasonal_order=(0,0,0,0))
+  sarima_model = SARIMAX(train, order=(2,1,0), seasonal_order=(0,0,0,0))
   sfit = sarima_model.fit()
 
   # Grafico degli errori, istogramma degli error (migliore quando i residui hanno una distribuzione normale), QQ plot, correlogramma (stagionalità sui residui)
-  sfit.plot_diagnostics(figsize=(10, 6))
+  sfit.plot_diagnostics(figsize=(10, 8))
   plot_show(shouldShowPlot)
 
   # Predizioni in-sample:
@@ -108,14 +110,24 @@ def sarimax(df, train, forecastSize, shouldShowPlot):
 
   forecast_ci_to_plot = ForecastCi(forecast_ci.index, forecast_ci.iloc[:, 0], forecast_ci.iloc[:, 1])
 
-  return ForecastResult(df, ypred, forecast_val, forecast_ci_to_plot)
+  return ForecastResult(ypred, forecast_val, forecast_ci_to_plot)
 
-def mlp(df, trainToDiff, forecastSize, shouldShowPlot):
-  train = pd.Series(trainToDiff).diff().to_numpy()
+def mlp(trainToDiff, forecastSize, shouldShowPlot):
+  # --- Diff transform ---
+  train = trainToDiff.diff().dropna().to_numpy()
+  
+  # --- Print ACF ---
 
-  # ------------------------------------------------- neural forecast
+  # Original Series
+  plt.rcParams.update({'figure.figsize':(10,4), 'figure.dpi':120})
+  fig, axes = plt.subplots(1, 2, sharex=False)
+  axes[0].plot(train)
+  axes[0].set_title('1st Order differencing (train data)')
+  plot_acf(train, ax=axes[1], lags=50)
+  plot_show(shouldShowPlot)
+
   from keras.preprocessing.sequence import TimeseriesGenerator
-  n_input = 250
+  n_input = 150
   generator = TimeseriesGenerator(train, train, length=n_input, batch_size=1)
 
   from keras.models import Sequential
@@ -123,7 +135,7 @@ def mlp(df, trainToDiff, forecastSize, shouldShowPlot):
 
   model = Sequential()
   # lstm_model.add(Dense(30, activation='linear', input_dim=n_input))
-  model.add(Dense(250, activation='relu', input_dim=n_input))
+  model.add(Dense(150, activation='relu', input_dim=n_input))
   model.add(Dense(1))
   model.compile(optimizer='adam', loss='mse')
   model.fit(generator,epochs=25) #epochs=25
@@ -133,44 +145,46 @@ def mlp(df, trainToDiff, forecastSize, shouldShowPlot):
   # Ogni volta lavoro su un sottoinsieme di dati quindi può peggiorare
   losses_lstm = model.history.history['loss']
   plt.xticks(np.arange(0,21,1)) # convergence trace
-  plt.plot(range(len(losses_lstm)),losses_lstm);
+  plt.plot(range(len(losses_lstm)),losses_lstm)
   plt.title("Loss")
+  plt.rcParams["figure.figsize"] = (10,8) # redefines figure size
   plot_show(shouldShowPlot)
-
+  
   # Prediction
+  lstm_predict = model.predict(generator, batch_size=n_input)
+  
+  ypred = np.transpose(lstm_predict).squeeze()
+  ypred = ypred.cumsum() + trainToDiff.values[n_input-1]
+
+  # Forecast
   lstm_forecast = list()
   batch = train[-n_input:]  # Metto dentro gli ultimi dati che userò come input per il primo valore previsto
   curbatch = batch.reshape((1, n_input))  # Creo l'array a partire dalla struttura keras
   for i in range(forecastSize):
-    lstm_pred = model.predict(curbatch)[0]
-    lstm_forecast.append(lstm_pred) # Salvo il valore previsto
-    curbatch = np.append(curbatch[:,1:],[lstm_pred], axis=1) # Rimuovo il valore più vecchio e aggiungo quello appena previsto
+    lstm_fore = model.predict(curbatch)[0]
+    lstm_forecast.append(lstm_fore) # Salvo il valore previsto
+    curbatch = np.append(curbatch[:,1:],[lstm_fore], axis=1) # Rimuovo il valore più vecchio e aggiungo quello appena previsto
 
   yfore = np.transpose(lstm_forecast).squeeze() # Transpose: da array verticale lo faccio diventare un array orizzontale/"normale"
-  yfore = np.r_[[trainToDiff.values[-1]], yfore.cumsum() + trainToDiff.values[-1]] # Transpose: sommo le diff tra loro e aggiungo a tutte il valore di partenza
+  yfore = yfore.cumsum() + trainToDiff.values[-1] # Sommo le diff tra loro e aggiungo a tutte il valore di partenza
 
+  return ForecastResult(ypred, yfore)
 
-  # evaluate the keras model
-  # accuracy = model.evaluate(generator)
-  # print('Accuracy: %.2f' % (accuracy*100))
+def lstm(trainToDiff, forecastSize, shouldShowPlot):
+  # --- Diff transform ---
+  train = trainToDiff.diff().dropna().to_numpy()
+  
+  # --- Print ACF ---
 
-  # Forecast
-  # lstm_forecast_2 = list()
-  # batch = np.array(lstm_forecast)[-n_input:]  # Metto dentro gli ultimi dati che userò come input per il primo valore previsto
-  # curbatch = batch.reshape((1, n_input))  # Creo l'array a partire dalla struttura keras
-  # for i in range(len(test)):
-  #   lstm_pred = model.predict(curbatch)[0]
-  #   lstm_forecast_2.append(lstm_pred) # Salvo il valore previsto
-  #   curbatch = np.append(curbatch[:,1:],[lstm_pred],axis=1) # Rimuovo il valore più vecchio e aggiungo quello appena previsto
+  # Original Series
+  plt.rcParams.update({'figure.figsize':(10,4), 'figure.dpi':120})
+  fig, axes = plt.subplots(1, 2, sharex=False)
+  axes[0].plot(train)
+  axes[0].set_title('1st Order differencing (train data)')
+  plot_acf(train, ax=axes[1], lags=50)
+  plot_show(shouldShowPlot)
 
-  # zfore = np.transpose(lstm_forecast_2).squeeze() # Transpose: da array verticale lo faccio diventare un array orizzontale/"normale"
-
-  return ForecastResult(df, trainToDiff, yfore)
-
-def lstm(df, trainToDiff, forecastSize, shouldShowPlot):
-  train = pd.Series(trainToDiff).diff().to_numpy()
-
-  # ------------------------------------------------- neural forecast
+  # --- Scaling tranform ---
   from sklearn.preprocessing import MinMaxScaler
   scaler = MinMaxScaler()
   scaler.fit_transform(train.reshape(-1, 1))
@@ -178,7 +192,7 @@ def lstm(df, trainToDiff, forecastSize, shouldShowPlot):
   # scaled_test_data = scaler.transform(test.reshape(-1, 1))
 
   from keras.preprocessing.sequence import TimeseriesGenerator
-  n_input = 10; n_features = 1
+  n_input = 50; n_features = 1
   generator = TimeseriesGenerator(scaled_train_data, scaled_train_data, length=n_input,
   batch_size=1)
 
@@ -187,46 +201,42 @@ def lstm(df, trainToDiff, forecastSize, shouldShowPlot):
   from keras.layers import LSTM
 
   lstm_model = Sequential()
-  lstm_model.add(LSTM(10, activation='relu', input_shape=(n_input, n_features), dropout=0.05))
+  lstm_model.add(LSTM(15, activation='relu', input_shape=(n_input, n_features), dropout=0.05))
   lstm_model.add(Dense(1))
   lstm_model.compile(optimizer='adam', loss='mse')
   lstm_model.summary()
-  lstm_model.fit_generator(generator,epochs=10) #epochs=10
+  lstm_model.fit_generator(generator,epochs=10)
 
   # Andamento loss
   # Ogni volta lavoro su un sottoinsieme di dati quindi può peggiorare
   losses_lstm = lstm_model.history.history['loss']
   plt.xticks(np.arange(0,21,1)) # convergence trace
-  plt.plot(range(len(losses_lstm)),losses_lstm);
+  plt.plot(range(len(losses_lstm)),losses_lstm)
   plt.title("Loss")
+  plt.rcParams["figure.figsize"] = (10,8) # redefines figure size
   plot_show(shouldShowPlot)
-
+  
   # Prediction
-  lstm_predictions_scaled = list()
+  lstm_predict_scaled = lstm_model.predict(scaled_train_data, batch_size=n_input)
+  
+  lstm_predict = scaler.inverse_transform(lstm_predict_scaled)
+  ypred = np.transpose(lstm_predict).squeeze()
+  ypred = ypred.cumsum() + trainToDiff.values[n_input-1]
+
+  # Forecast
+  lstm_forecast_scaled = list()
   batch = scaled_train_data[-n_input:]  # Metto dentro gli ultimi dati che userò come input per il primo valore previsto
   curbatch = batch.reshape((1, n_input, n_features))  # Creo l'array a partire dalla struttura keras
   for i in range(forecastSize):
-    lstm_pred = lstm_model.predict(curbatch)[0]
-    lstm_predictions_scaled.append(lstm_pred) # Salvo il valore previsto
-    curbatch = np.append(curbatch[:,1:,:],[[lstm_pred]],axis=1) # Rimuovo il valore più vecchio e aggiungo quello appena previsto
+    lstm_fore = lstm_model.predict(curbatch)[0]
+    lstm_forecast_scaled.append(lstm_fore) # Salvo il valore previsto
+    curbatch = np.append(curbatch[:,1:,:],[[lstm_fore]],axis=1) # Rimuovo il valore più vecchio e aggiungo quello appena previsto
 
-  lstm_forecast = scaler.inverse_transform(lstm_predictions_scaled) # Lo scaler si ricorda la funzione usata per scalare e ricalcola i valori
+  lstm_forecast = scaler.inverse_transform(lstm_forecast_scaled) # Lo scaler si ricorda la funzione usata per scalare e ricalcola i valori
   yfore = np.transpose(lstm_forecast).squeeze() # Transpose: da array verticale lo faccio diventare un array orizzontale/"normale"
-  yfore = np.r_[[trainToDiff.values[-1]], yfore.cumsum() + trainToDiff.values[-1]] # Transpose: sommo le diff tra loro e aggiungo a tutte il valore di partenza
+  yfore = yfore.cumsum() + trainToDiff.values[-1] # Sommo le diff tra loro e aggiungo a tutte il valore di partenza
 
-  # Forecast
-  # lstm_forecast_scaled = list()
-  # batch = np.array(lstm_predictions_scaled)[-n_input:]  # Metto dentro gli ultimi dati che userò come input per il primo valore previsto
-  # curbatch = batch.reshape((1, n_input, n_features))  # Creo l'array a partire dalla struttura keras
-  # for i in range(len(test)):
-  #   lstm_pred = lstm_model.predict(curbatch)[0]
-  #   lstm_forecast_scaled.append(lstm_pred) # Salvo il valore previsto
-  #   curbatch = np.append(curbatch[:,1:,:],[[lstm_pred]],axis=1) # Rimuovo il valore più vecchio e aggiungo quello appena previsto
-
-  # lstm_forecast_2 = scaler.inverse_transform(lstm_forecast_scaled) # Lo scaler si ricorda la funzione usata per scalare e ricalcola i valori
-  # zfore = np.transpose(lstm_forecast_2).squeeze() # Transpose: da array verticale lo faccio diventare un array orizzontale/"normale"
-
-  return ForecastResult(df, train, yfore)
+  return ForecastResult(ypred, yfore)
 
 if __name__ == "__main__":
   # change working directory to script path
@@ -264,20 +274,18 @@ if __name__ == "__main__":
   data = pd.Series(logdata) # convert to pandas series
 
   # --- Print ACF ---
-  from statsmodels.graphics.tsaplots import plot_acf
 
   # Original Series
-  plt.rcParams.update({'figure.figsize':(9,7), 'figure.dpi':120})
-  fig, axes = plt.subplots(2, 2, sharex=True)
+  plt.rcParams.update({'figure.figsize':(10,8), 'figure.dpi':120})
+  fig, axes = plt.subplots(2, 2, sharex=False)
   axes[0, 0].plot(df['value']);
   axes[0, 0].set_title('Original Series')
-  plot_acf(df['value'], ax=axes[0, 1], lags=2000)
+  plot_acf(df['value'], ax=axes[0, 1], lags=50)
 
-  # 1st Differencing
+  # Transformed Series
   axes[1, 0].plot(data);
-  #axes[1, 0].set_title('1st Order Differencing')
   axes[1, 0].set_title('Log transformed')
-  plot_acf(data.dropna(), ax=axes[1, 1], lags=2000)
+  plot_acf(data.dropna(), ax=axes[1, 1], lags=50)
   plot_show(shouldShowPlot)
 
   # --- Train and test set ---
@@ -287,38 +295,37 @@ if __name__ == "__main__":
 
   # --- Train, predict and forecast ---
   if tec == "lstm":
-    res = lstm(df, train, test.size, shouldShowPlot)
+    res = lstm(train, test.size, shouldShowPlot)
   elif tec == "sarima":
-    res = sarima(df, train, test.size, shouldShowPlot)
+    res = sarima(train, test.size, shouldShowPlot)
   elif tec == "sarimax":
-    res = sarimax(df, train, test.size, shouldShowPlot)
+    res = sarimax(train, test.size, shouldShowPlot)
   else:
-    res = mlp(df, train, test.size, shouldShowPlot)
+    res = mlp(train, test.size, shouldShowPlot)
 
   # recostruction
-  #res.train[0] = 0
-  #res.forecast[0] = 0
   exptrain = np.exp(res.train) # unlog
   expfore = np.exp(res.forecast)
-  #expfore = np.exp(res.forecast+logdata[len(logdata)-1])
   forecast_ci = res.forecast_ci
   #if (forecast_ci != None):
   #  forecast_ci = ForecastCi(forecast_ci.index, np.exp(forecast_ci.max+logdata[len(logdata)-cutpoint-1]), np.exp(forecast_ci.min.cumsum()+logdata[len(logdata)-cutpoint-1]))
-  res = ForecastResult(df, exptrain, expfore, forecast_ci)
+  res = ForecastResult(exptrain, expfore, forecast_ci, df)
 
   plot(res, shouldShowPlot)
 
+  rawTrain = aValues[:-cutpoint]
   # --- Calculate revenue and risk ---
-  actualValue = exptrain[exptrain.size - 1]
+  actualValue = rawTrain[rawTrain.size - 1]
   lastMonthValues = res.forecast[-25:]
   forecastAvgValue = np.mean(lastMonthValues)
   accuracy_mape = np.mean(np.abs(lastMonthValues - actualValue)/np.abs(actualValue)) # MAPE
 
   # --- Value at Risk, historical simulation on the last 12 months ---
-  # // TODO TODO TODO confronto con i valori excel TODO TODO TODO
-  pctChanges = pd.Series(exptrain[-12*25:]).pct_change().dropna()
+  pctChanges = pd.Series(rawTrain[-12*25-1:]).pct_change().dropna()
   pctChanges.sort_values(inplace=True, ascending=True)
-  accuracy_var = pctChanges.quantile(0.05) # VaR con confidenza 95%
+  # VaR con confidenza 95%, lower perché altrimenti sceglie 16 invece di 15 valori
+  # la funzione quantile divide l'array come richiesto e poi ritorna l'ultimo valore del primo quantile
+  accuracy_var = pctChanges.quantile(0.05, interpolation='lower')
 
   print('LOG Last train value', actualValue)
   print('LOG Last forecasted month (avg)', forecastAvgValue)
