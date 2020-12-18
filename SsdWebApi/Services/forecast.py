@@ -79,16 +79,13 @@ def sarima(train, forecastSize, shouldShowPlot):
                     stepwise=True) # False full grid
 
   print(model.summary()) # stampa i test statistici di affidabilità
-  print('LOG Sarima parameters:', model.order, '(0, 0, 0) [0]')
-
-  # morder = model.order
-  # mseasorder = model.seasonal_order
+  print('LOG Sarima parameters:', model.order, model.seasonal_order)
 
   fitted = model.fit(train)
-  
+
   # Predizioni in-sample
   ypred = fitted.predict_in_sample()[1:] # Rimuove il primo valore perché zero
-  
+
   # Previsione out-of-sample
   yfore = fitted.predict(n_periods=forecastSize)
 
@@ -118,7 +115,7 @@ def sarimax(train, forecastSize, shouldShowPlot):
 def mlp(trainToDiff, forecastSize, shouldShowPlot):
   # --- Diff transform ---
   train = trainToDiff.diff().dropna().to_numpy()
-  
+
   # --- Print ACF ---
 
   # Original Series
@@ -130,46 +127,51 @@ def mlp(trainToDiff, forecastSize, shouldShowPlot):
   plot_show(shouldShowPlot)
 
   from keras.preprocessing.sequence import TimeseriesGenerator
-  n_input = 150
+  n_input = 30
   generator = TimeseriesGenerator(train, train, length=n_input, batch_size=1)
 
   from keras.models import Sequential
   from keras.layers import Dense
 
+  # --- Generazione modello ---
+  # Dimensione training set: 5223 - 300 = 4923
+  # Pesi: neuroniInput * neuroniNascosti + neuroniNascosti*neuroniOutput
+  #       30*15 + 15*15 + 15*15 + 25*1 = 450 + 225 + 225 + 15 = 915
   model = Sequential()
-  # lstm_model.add(Dense(30, activation='linear', input_dim=n_input))
-  model.add(Dense(150, activation='relu', input_dim=n_input))
+  model.add(Dense(15, activation='relu', input_dim=n_input))
+  model.add(Dense(15, activation='relu', input_dim=15))
+  model.add(Dense(15, activation='relu', input_dim=15))
   model.add(Dense(1))
   model.compile(optimizer='adam', loss='mse')
-  model.fit(generator,epochs=25) #epochs=25
+  model.fit(generator,epochs=25)
   model.summary()
 
   # Andamento loss
   # Ogni volta lavoro su un sottoinsieme di dati quindi può peggiorare
-  losses_lstm = model.history.history['loss']
+  losses_mlp= model.history.history['loss']
   plt.xticks(np.arange(0,21,1)) # convergence trace
-  plt.plot(range(len(losses_lstm)),losses_lstm)
+  plt.plot(range(len(losses_mlp)),losses_mlp)
   plt.title("Loss")
   plt.rcParams["figure.figsize"] = (10,8) # redefines figure size
   plot_show(shouldShowPlot)
-  
+
   # Predizioni in-sample
-  #lstm_predict = model.predict(generator, batch_size=n_input)
-  
-  #ypred = np.transpose(lstm_predict).squeeze()
+  #mlp_predict = model.predict(generator)
+
+  #ypred = np.transpose(mlp_predict).squeeze()
   #ypred = ypred.cumsum() + trainToDiff.values[n_input-1]
   ypred = [0 for x in trainToDiff]
 
   # Forecast
-  lstm_forecast = list()
+  mlp_forecast = list()
   batch = train[-n_input:]  # Metto dentro gli ultimi dati che userò come input per il primo valore previsto
   curbatch = batch.reshape((1, n_input))  # Creo l'array a partire dalla struttura keras
   for i in range(forecastSize):
-    lstm_fore = model.predict(curbatch)[0]
-    lstm_forecast.append(lstm_fore) # Salvo il valore previsto
-    curbatch = np.append(curbatch[:,1:],[lstm_fore], axis=1) # Rimuovo il valore più vecchio e aggiungo quello appena previsto
+    mlp_fore = model.predict(curbatch)[0]
+    mlp_forecast.append(mlp_fore) # Salvo il valore previsto
+    curbatch = np.append(curbatch[:,1:],[mlp_fore], axis=1) # Rimuovo il valore più vecchio e aggiungo quello appena previsto
 
-  yfore = np.transpose(lstm_forecast).squeeze() # Transpose: da array verticale lo faccio diventare un array orizzontale/"normale"
+  yfore = np.transpose(mlp_forecast).squeeze() # Transpose: da array verticale lo faccio diventare un array orizzontale/"normale"
   yfore = yfore.cumsum() + trainToDiff.values[-1] # Sommo le diff tra loro e aggiungo a tutte il valore di partenza
 
   return ForecastResult(ypred, yfore)
@@ -177,7 +179,7 @@ def mlp(trainToDiff, forecastSize, shouldShowPlot):
 def lstm(trainToDiff, forecastSize, shouldShowPlot):
   # --- Diff transform ---
   train = trainToDiff.diff().dropna().to_numpy()
-  
+
   # --- Print ACF ---
 
   # Original Series
@@ -196,7 +198,7 @@ def lstm(trainToDiff, forecastSize, shouldShowPlot):
   # scaled_test_data = scaler.transform(test.reshape(-1, 1))
 
   from keras.preprocessing.sequence import TimeseriesGenerator
-  n_input = 50; n_features = 1
+  n_input = 30; n_features = 1
   generator = TimeseriesGenerator(scaled_train_data, scaled_train_data, length=n_input,
   batch_size=1)
 
@@ -204,6 +206,10 @@ def lstm(trainToDiff, forecastSize, shouldShowPlot):
   from keras.layers import Dense
   from keras.layers import LSTM
 
+  # --- Generazione modello ---
+  # Dimensione training set: 5223 - 300 = 4923
+  # Pesi: neuroniInput * neuroniNascosti + neuroniNascosti*neuroniOutput
+  #       30*15 + 15*1 = 450 + 15 = 465
   lstm_model = Sequential()
   lstm_model.add(LSTM(15, activation='relu', input_shape=(n_input, n_features), dropout=0.05))
   lstm_model.add(Dense(1))
@@ -219,10 +225,10 @@ def lstm(trainToDiff, forecastSize, shouldShowPlot):
   plt.title("Loss")
   plt.rcParams["figure.figsize"] = (10,8) # redefines figure size
   plot_show(shouldShowPlot)
-  
+
   # Predizioni in-sample
-  #lstm_predict_scaled = lstm_model.predict(scaled_train_data, batch_size=n_input)
-  
+  #lstm_predict_scaled = lstm_model.predict(generator)
+
   #lstm_predict = scaler.inverse_transform(lstm_predict_scaled)
   #ypred = np.transpose(lstm_predict).squeeze()
   #ypred = ypred.cumsum() + trainToDiff.values[n_input-1]
@@ -308,15 +314,15 @@ if __name__ == "__main__":
   else:
     res = mlp(train, test.size, shouldShowPlot)
 
-  # recostruction
+  #--- Recostruction ---
   exptrain = np.exp(res.train) # unlog
   expfore = np.exp(res.forecast)
   forecast_ci = res.forecast_ci
   if (forecast_ci != None):
     forecast_ci = ForecastCi(forecast_ci.index, np.exp(forecast_ci.max), np.exp(forecast_ci.min))
   res = ForecastResult(exptrain, expfore, forecast_ci, df)
-    
 
+  #--- Plot ---
   plot(res, shouldShowPlot)
 
   rawTrain = aValues[:-cutpoint]

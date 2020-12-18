@@ -77,7 +77,7 @@ namespace SsdWebApi.Services
         // Con la potenza si ottiene sempre un valore del rischio positivo (per non modificare il segno di revenue)
         // e si da minor valore alle ricompense ad alto rischio (revenue aumenta in maniera lineare mentre risk in maniera esponenziale)
         for (i = 0; i < dim - 1; i++)
-          sum += revenue[i]*xvec[i] / Math.Pow(risk[i]*xvec[i], 2);
+          sum += revenue[i]*xvec[i]*10000 / Math.Pow(risk[i]*xvec[i]*10000, 2);
         return sum;
       };
     }
