@@ -4,6 +4,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
+using System.IO;
 using SsdWebApi.Models;
 
 namespace SsdWebApi
@@ -36,10 +38,27 @@ namespace SsdWebApi
       {
         app.UseDeveloperExceptionPage();
       }
+      app.Use(async (context, next) => {
+        await next();
+
+        if (context.Response.StatusCode == 404 &&
+              !Path.HasExtension(context.Request.Path.Value) &&
+              !context.Request.Path.Value.StartsWith("/api/"))
+        {
+          context.Request.Path = "/index.html";
+
+          await next();
+        }
+      });
 
       // Per servire il client
       app.UseDefaultFiles();
-      app.UseStaticFiles();
+      app.UseStaticFiles(new StaticFileOptions
+      {
+          FileProvider = new PhysicalFileProvider(
+              Path.Combine(env.ContentRootPath, "views")),
+          RequestPath = ""
+      });
 
       app.UseHttpsRedirection();
 
@@ -47,8 +66,8 @@ namespace SsdWebApi
 
       app.UseCors("AllowAnyOrigin");
 
-      app.UseAuthorization();
 
+      app.UseAuthorization();
       app.UseEndpoints(endpoints =>
       {
         endpoints.MapControllers();
