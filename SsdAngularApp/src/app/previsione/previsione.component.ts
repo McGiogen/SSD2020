@@ -15,7 +15,7 @@ export class PrevisioneComponent {
 
   form = new FormGroup({
     indiceId: new FormControl(2),
-    type: new FormControl('mlp'),
+    type: new FormControl('sarima'),
   });
 
   result$: Observable<any>;

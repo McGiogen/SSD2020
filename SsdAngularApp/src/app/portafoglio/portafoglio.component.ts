@@ -15,7 +15,7 @@ export class PortafoglioComponent {
   risks = ['var', 'mape'];
 
   form = new FormGroup({
-    type: new FormControl(this.types[0]),
+    type: new FormControl(this.types[2]),
     risk: new FormControl(this.risks[0]),
   });
 
