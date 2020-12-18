@@ -43,7 +43,7 @@ def plot(forecastResult, shouldShowPlot):
   # A fini grafici aggiungo anche l'ultimo valore del train-set all'inizio della serie
   plt.plot([None for x in forecastResult.train[:-1]]+[forecastResult.dataset['value'][forecastResult.train.size-1]]+[x for x in forecastResult.forecast], 'red', label='Forecast')
 
-  if forecast_ci != None:
+  if forecastResult.forecast_ci != None:
     plt.fill_between(forecast_ci.index,
                      forecast_ci.max,
                      forecast_ci.min, color='k', alpha=.25)

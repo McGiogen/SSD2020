@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Quotazione } from '../../model/quotazione';
 import { Observable } from 'rxjs';
 
-const URL = 'https://localhost:5001/api/Quotazione';
+const URL = '/api/Quotazione';
 
 @Injectable({
   providedIn: 'root'

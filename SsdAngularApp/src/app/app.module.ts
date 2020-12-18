@@ -3,7 +3,6 @@ import { NgModule } from '@angular/core';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { ServiceWorkerModule } from '@angular/service-worker';
 import { environment } from '../environments/environment';
 import { RestFormComponent } from './rest-form/rest-form.component';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -40,7 +39,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
     AppRoutingModule,
     ReactiveFormsModule,
     HttpClientModule,
-    ServiceWorkerModule.register('ngsw-worker.js', { enabled: environment.production }),
     CoreModule,
     BrowserAnimationsModule,
     LayoutModule,
