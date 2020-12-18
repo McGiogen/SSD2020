@@ -330,7 +330,7 @@ if __name__ == "__main__":
   actualValue = rawTrain[rawTrain.size - 1]
   lastMonthValues = res.forecast[-25:]
   forecastAvgValue = np.mean(lastMonthValues)
-  accuracy_mape = np.mean(np.abs(lastMonthValues - actualValue)/np.abs(actualValue)) # MAPE
+  accuracy_mape = np.mean(np.abs(res.forecast - rawTrain[len(-res.forecast):])/np.abs(rawTrain[len(-res.forecast):])) # MAPE
 
   # --- Value at Risk, historical simulation on the last 12 months ---
   pctChanges = pd.Series(rawTrain[-12*25-1:]).pct_change().dropna()
