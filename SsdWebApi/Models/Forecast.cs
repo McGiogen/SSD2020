@@ -19,7 +19,7 @@ namespace SsdWebApi.Models
       PythonRunner runner = new PythonRunner(interpreter, environment, timeout);
 
       try {
-        string command = $"/home/gioele/workspace/uni/ssd/esame/SsdWebApi/Services/forecast.py {index}.csv {type}";
+        string command = $"/home/gioele/workspace/uni/ssd/esame/SsdWebApi/Models/forecast.py {index}.csv {type}";
         string list = runner.runDosCommands(command);
 
         if (string.IsNullOrWhiteSpace(list)) {
