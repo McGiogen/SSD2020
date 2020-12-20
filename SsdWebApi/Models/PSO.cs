@@ -62,7 +62,7 @@ namespace SsdWebApi.Services
 
       foreach (int iter in Enumerable.Range(0, iters))
       {
-        // Console.WriteLine($"Ciclo {iter}, best result {fitGlobalBest}");
+        Console.WriteLine($"Ciclo {iter}, best result {fitGlobalBest}");
 
         // Update all particles
         foreach (Particle particle in particles)

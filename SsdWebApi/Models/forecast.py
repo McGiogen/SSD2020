@@ -6,6 +6,11 @@ from statsmodels.graphics.tsaplots import plot_acf
 # Startup config
 np.random.seed(550) # for reproducibility
 
+class SarimaParams:
+  def __init__(self, order, seasonal_order=(0,0,0,0)):
+    self.order = order
+    self.seasonal_order = seasonal_order
+
 class ForecastResult:
   def __init__(self, train, forecast, forecast_ci=None, dataset=None):
     self.train = train
@@ -72,7 +77,7 @@ def sarima(train, forecastSize, shouldShowPlot):
   import pmdarima as pm
   model = pm.auto_arima(train, start_p=1, start_q=1, # intervalli validi di p, q, P, Q
                     test='adf', max_p=3, max_q=3, m=1, # m = stagionalità
-                    start_P=0, seasonal=False,
+                    start_P=0, seasonal=True,
                     d=None, D=0, trace=True,
                     error_action='ignore',
                     suppress_warnings=True,
@@ -91,9 +96,11 @@ def sarima(train, forecastSize, shouldShowPlot):
 
   return ForecastResult(ypred, yfore)
 
-def sarimax(train, forecastSize, shouldShowPlot):
+def sarimax(train, forecastSize, shouldShowPlot, sarimaParams):
+  print('LOG Sarima parameters:', sarimaParams.order, sarimaParams.seasonal_order)
+  
   from statsmodels.tsa.statespace.sarimax import SARIMAX
-  sarima_model = SARIMAX(train, order=(2,1,0), seasonal_order=(0,0,0,0))
+  sarima_model = SARIMAX(train, order=sarimaParams.order, trend="t") # Trend lineare per rispettare i risultati di auto_sarima
   sfit = sarima_model.fit()
 
   # Grafico degli errori, istogramma degli error (migliore quando i residui hanno una distribuzione normale), QQ plot, correlogramma (stagionalità sui residui)
@@ -310,7 +317,16 @@ if __name__ == "__main__":
   elif tec == "sarima":
     res = sarima(train, test.size, shouldShowPlot)
   elif tec == "sarimax":
-    res = sarimax(train, test.size, shouldShowPlot)
+    params = {
+      "SP_500.csv": SarimaParams((2, 1, 0), (0, 0, 0, 0)),
+      "FTSE_MIB.csv": SarimaParams((0, 1, 0), (0, 0, 0, 0)),
+      "GOLD_SPOT.csv": SarimaParams((0, 1, 1), (0, 0, 0, 0)),
+      "MSCI_EM.csv": SarimaParams((0, 1, 1), (0, 0, 0, 0)),
+      "MSCI_EURO.csv": SarimaParams((0, 1, 0), (0, 0, 0, 0)),
+      "All_Bonds.csv": SarimaParams((1, 1, 3), (0, 0, 0, 0)),
+      "US_Treasury.csv": SarimaParams((0, 1, 0), (0, 0, 0, 0))
+    }
+    res = sarimax(train, test.size, shouldShowPlot, params.get(dffile, "Invalid csv file name"))
   else:
     res = mlp(train, test.size, shouldShowPlot)
 
@@ -334,13 +350,14 @@ if __name__ == "__main__":
 
   # --- Value at Risk, historical simulation on the last 12 months ---
   pctChanges = pd.Series(rawTrain[-12*25-1:]).pct_change().dropna()
-  pctChanges.sort_values(inplace=True, ascending=True)
+  #pctChanges.sort_values(inplace=True, ascending=True)
   # VaR con confidenza 95%, lower perché altrimenti sceglie 16 invece di 15 valori
   # la funzione quantile divide l'array come richiesto e poi ritorna l'ultimo valore del primo quantile
   accuracy_var = pctChanges.quantile(0.05, interpolation='lower')
 
   print('LOG Last train value', actualValue)
   print('LOG Last forecasted month (avg)', forecastAvgValue)
+  print('PCT_CHANGES', '['+','.join(np.char.mod('%f', pctChanges))+']')
   print('REVENUE', forecastAvgValue - actualValue)
   print('REVENUE_PERC', (forecastAvgValue-actualValue)/actualValue)
   print('MAPE', accuracy_mape)

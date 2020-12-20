@@ -6,7 +6,8 @@ namespace SsdWebApi.Services
 {
   public class PSOHandler
   {
-    public static PSO start(int id, double[] indexesRevenue = null, double[] indexesRisk = null) {
+    public static PSO start(int id, double[] indexesRevenue = null, double[] indexesRisk = null, double[][] pctChanges = null)
+    {
       // double res = double.MinValue;
       int dimensions = 0;
       double valueMin = 0, valueMax = 0, velocityMin = 0, velocityMax = 0;
@@ -19,29 +20,45 @@ namespace SsdWebApi.Services
 
       double c0 = 0.25, c1 = 1.5, c2 = 2.0;
 
-      if (id == 1) {
+      if (id == 1)
+      {
         dimensions = 20;
         valueMin = velocityMin = -100;
         valueMax = velocityMax = 100;
         calculateFitness = PSOHandler.paraboloid;
         adeguateLimits = PSOHandler.adeguateLimitsPerDimension(valueMin, valueMax);
-      } else if (id == 2) {
+      }
+      else if (id == 2)
+      {
         dimensions = 30;
         valueMin = velocityMin = -2048;
         valueMax = velocityMax = 2048;
         iters = 2000;
         calculateFitness = PSOHandler.rosenbrock;
         adeguateLimits = PSOHandler.adeguateLimitsPerDimension(valueMin, valueMax);
-      } else {
-        if (indexesRevenue == null || indexesRisk == null) throw new Exception("indexesRevenue and indexesRisk cannot be null");
+      }
+      else
+      {
+        if (indexesRevenue == null || indexesRisk == null) throw new Exception("indexesRevenue and indexesRisk can't be null");
         dimensions = 7;
         valueMin = 5;
-        valueMax = (100 - valueMin*dimensions) * 2/dimensions + valueMin;
+        valueMax = (100 - valueMin * dimensions) * 2 / dimensions + valueMin;
         velocityMin = 0;
-        velocityMax = 5;
-        iters = 2000;
-        calculateFitness = PSOHandler.indexesFitness(indexesRevenue, indexesRisk);
+        velocityMax = 20;
         adeguateLimits = PSOHandler.adeguateLimitsPerc(5);
+
+        if (id == 3)
+        {
+          // Revenue & MAPE
+          calculateFitness = PSOHandler.indexesFitnessGeneric(indexesRevenue, indexesRisk);
+        }
+        else
+        {
+          // VaR
+          c1 = 20;
+          c2 = 10;
+          calculateFitness = PSOHandler.indexesFitnessVaR(pctChanges);
+        }
       }
 
       PSO pso = new PSO(c0, c1, c2, valueMin, valueMax, velocityMin, velocityMax, calculateFitness, adeguateLimits);
@@ -68,22 +85,37 @@ namespace SsdWebApi.Services
       return -sum;
     }
 
-    static public Func<double[], double> indexesFitness(double[] revenue, double[] risk)
+    static public Func<double[], double> indexesFitnessVaR(double[][] pctChanges)
     {
-      return (double[] xvec) => {
+      return (double[] xvec) =>
+      {
+        // Rapporto dei valori in base alla percentuale di ogni indice
+        var relativePctChanges = pctChanges.Select((indexPctChanges, index) => indexPctChanges.Select(pctChange => pctChange * xvec[index]).ToArray()).ToArray();
+        // Aggregazione degli indici in un unico indice di portafoglio
+        double[] portfolioPctChanges = transposeMatrix(relativePctChanges).Select((indexPctChanges, i) => indexPctChanges.Sum()).ToArray();
+        // Calcolo VaR con Historical Simulation
+        return percentile(portfolioPctChanges, 0.05);
+      };
+    }
+
+    static public Func<double[], double> indexesFitnessGeneric(double[] revenue, double[] risk)
+    {
+      return (double[] xvec) =>
+      {
         double sum = 0;
         int i, dim = xvec.Length;
         // Con la divisione si comparano meglio guadagni e rischi alti con guadagni e rischi bassi
-        // Con la potenza si ottiene sempre un valore del rischio positivo (per non modificare il segno di revenue)
-        // e si da minor valore alle ricompense ad alto rischio (revenue aumenta in maniera lineare mentre risk in maniera esponenziale)
+        // Con la potenza si da minor valore ai ricavi ad alto rischio (revenue aumenta in maniera lineare mentre risk in maniera esponenziale)
         for (i = 0; i < dim - 1; i++)
-          sum += revenue[i]*xvec[i]*10000 / Math.Pow(risk[i]*xvec[i]*10000, 2);
+          sum += revenue[i] * xvec[i] * 100000 / Math.Pow(risk[i] * xvec[i] * 100000, 2);
         return sum;
       };
     }
 
-    static public Action<Particle> adeguateLimitsPerDimension(double minValue, double maxValue) {
-      return (Particle particle) => {
+    static public Action<Particle> adeguateLimitsPerDimension(double minValue, double maxValue)
+    {
+      return (Particle particle) =>
+      {
         foreach (int d in Enumerable.Range(0, particle.value.Length))
         {
           // position entro i limiti
@@ -101,8 +133,10 @@ namespace SsdWebApi.Services
       };
     }
 
-    static public Action<Particle> adeguateLimitsPerc(double minPerc) {
-      return (Particle particle) => {
+    static public Action<Particle> adeguateLimitsPerc(double minPerc)
+    {
+      return (Particle particle) =>
+      {
         int dimensions = particle.value.Length;
 
         // Rimuove il valore minimo - minPerc - e calcola il totale
@@ -110,7 +144,7 @@ namespace SsdWebApi.Services
         double tot = values.Sum();
 
         // Verifica il raggiungimento del 100% ed eventualmente adegua
-        double desiredTot = 100 - minPerc*dimensions;
+        double desiredTot = 100 - minPerc * dimensions;
         if (tot != desiredTot)
         {
           foreach (int d in Enumerable.Range(0, values.Length))
@@ -123,6 +157,41 @@ namespace SsdWebApi.Services
         // Aggiunge il limite minimo - minPerc
         Array.Copy(values.Select(v => v + 5).ToArray(), particle.value, dimensions);
       };
+    }
+
+    static private double percentile(double[] sequence, double percentage)
+    {
+      Array.Sort(sequence);
+      int N = sequence.Length;
+      double n = (N - 1) * percentage + 1; // Percentile position
+      if (n == 1d) return sequence[0];
+      else if (n == N) return sequence[N - 1];
+      else
+      {
+        int k = (int)n; // Arrotondamento verso il basso
+        double d = n - k; // Resto dell'arrotondamento
+        return sequence[k - 1] + d * (sequence[k] - sequence[k - 1]); // Una media pesata tra i due possibili valori, dove il peso è dato dal resto dell'arrotondamento
+      }
+    }
+
+    static private double[][] transposeMatrix(double[][] matrix)
+    {
+      var rows = matrix.GetLength(0);
+      var columns = matrix[0].GetLength(0);
+
+      var result = new List<List<double>>(columns);
+
+      for (var c = 0; c < columns; c++)
+      {
+        var row = new List<double>(rows);
+        for (var r = 0; r < rows; r++)
+        {
+          row.Add(matrix[r][c]);
+        }
+        result.Add(row);
+      }
+
+      return result.Select(list => list.ToArray()).ToArray();
     }
   }
 }

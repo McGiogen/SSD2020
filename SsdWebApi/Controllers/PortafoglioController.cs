@@ -31,24 +31,20 @@ namespace SsdWebApi.Controllers
       Forecast forecast = new Forecast();
       double[] indexesRevenue = new double[indices.Length];
       double[] indexesRisk = new double[indices.Length];
+      List<double[]> pctChanges = new List<double[]>(indices.Length);
       List<string> text = new List<string>();
       List<string[]> img = new List<string[]>();
       for (int i = 0; i < indices.Length; i++) {
         ForecastResult forecastResult = forecast.forecastIndex(indices[i], forecastType);
-        if (riskType == "mape") {
-          indexesRevenue[i] = forecastResult.revenuePerc;
-          indexesRisk[i] = forecastResult.mape;
-        } else {
-          // var: percentages
-          indexesRevenue[i] = forecastResult.revenuePerc;
-          indexesRisk[i] = forecastResult.valueAtRisk;
-        }
+        indexesRevenue[i] = forecastResult.revenuePerc;
+        indexesRisk[i] = forecastResult.mape;
+        pctChanges.Add(forecastResult.pctChanges);
         text.Add(forecastResult.text);
         img.Add(forecastResult.img);
       }
 
       // Ottimizzazione portafoglio
-      double[] portfolioValues = PSOHandler.start(riskType == "mape" ? 3 : 4, indexesRevenue, indexesRisk).globalBest;
+      double[] portfolioValues = PSOHandler.start(riskType == "mape" ? 3 : 4, indexesRevenue, indexesRisk, pctChanges.ToArray()).globalBest;
 
       // Output data
       Portfolio portfolio = new Portfolio();

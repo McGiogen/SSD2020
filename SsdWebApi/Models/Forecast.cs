@@ -2,6 +2,7 @@ using System;
 using SsdWebApi.Services;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 
 namespace SsdWebApi.Models
 {
@@ -48,6 +49,12 @@ namespace SsdWebApi.Models
             Console.WriteLine(s);
             res.text += s + Environment.NewLine;
             res.revenuePerc = Convert.ToDouble(s.Trim().Substring(s.Trim().IndexOf(" ") + 1), CultureInfo.InvariantCulture);
+          }
+          if (s.StartsWith("PCT_CHANGES ")) {
+            Console.WriteLine(s);
+            int startIndex = s.Trim().IndexOf(" [")+2;
+            int endIndex = s.Trim().Length-1;
+            res.pctChanges = s[startIndex..endIndex].Split(",").Select(v => Convert.ToDouble(v, CultureInfo.InvariantCulture)).ToArray();
           }
           if (s.StartsWith("MAPE ")) {
             Console.WriteLine(s);
