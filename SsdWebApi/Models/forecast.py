@@ -98,7 +98,7 @@ def sarima(train, forecastSize, shouldShowPlot):
 
 def sarimax(train, forecastSize, shouldShowPlot, sarimaParams):
   print('LOG Sarima parameters:', sarimaParams.order, sarimaParams.seasonal_order)
-  
+
   from statsmodels.tsa.statespace.sarimax import SARIMAX
   sarima_model = SARIMAX(train, order=sarimaParams.order, trend="t") # Trend lineare per rispettare i risultati di auto_sarima
   sfit = sarima_model.fit()
@@ -264,7 +264,7 @@ if __name__ == "__main__":
 
   # --- Default values ---
   tec = "mlp"
-  months = 12
+  days = 250
   shouldShowPlot = False
 
   # --- Input parameters ---
@@ -307,7 +307,7 @@ if __name__ == "__main__":
   plot_show(shouldShowPlot)
 
   # --- Train and test set ---
-  cutpoint = months * 25;
+  cutpoint = days;
   train = data[:-cutpoint]
   test = data[-cutpoint:]
 
@@ -349,7 +349,7 @@ if __name__ == "__main__":
   accuracy_mape = np.mean(np.abs(res.forecast - rawTrain[-len(res.forecast):])/np.abs(rawTrain[-len(res.forecast):])) # MAPE
 
   # --- Value at Risk, historical simulation on the last 12 months ---
-  pctChanges = pd.Series(rawTrain[-12*25-1:]).pct_change().dropna()
+  pctChanges = pd.Series(rawTrain[-days-1:]).pct_change().dropna()
   #pctChanges.sort_values(inplace=True, ascending=True)
   # VaR con confidenza 95%, lower perché altrimenti sceglie 16 invece di 15 valori
   # la funzione quantile divide l'array come richiesto e poi ritorna l'ultimo valore del primo quantile

@@ -43,8 +43,8 @@ namespace SsdWebApi.Services
         dimensions = 7;
         valueMin = 5;
         valueMax = (100 - valueMin * dimensions) * 2 / dimensions + valueMin;
-        velocityMin = 0;
-        velocityMax = 20;
+        velocityMin = 5;
+        velocityMax = 10;
         adeguateLimits = PSOHandler.adeguateLimitsPerc(5);
 
         if (id == 3)
@@ -55,8 +55,6 @@ namespace SsdWebApi.Services
         else
         {
           // VaR
-          c1 = 20;
-          c2 = 10;
           calculateFitness = PSOHandler.indexesFitnessVaR(pctChanges);
         }
       }
@@ -105,9 +103,9 @@ namespace SsdWebApi.Services
         double sum = 0;
         int i, dim = xvec.Length;
         // Con la divisione si comparano meglio guadagni e rischi alti con guadagni e rischi bassi
-        // Con la potenza si da minor valore ai ricavi ad alto rischio (revenue aumenta in maniera lineare mentre risk in maniera esponenziale)
+        // Si ipotizza un investimento di 100.000 euro
         for (i = 0; i < dim - 1; i++)
-          sum += revenue[i] * xvec[i] * 100000 / Math.Pow(risk[i] * xvec[i] * 100000, 2);
+          sum += revenue[i] * 100000 * xvec[i] / (risk[i] * 100000 * xvec[i]);
         return sum;
       };
     }
