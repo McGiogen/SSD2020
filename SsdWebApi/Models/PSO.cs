@@ -114,6 +114,7 @@ namespace SsdWebApi.Services
           }
         }
       }
+      Console.WriteLine($"PSO completed, best result {fitGlobalBest}");
       return fitGlobalBest;
     }
   }

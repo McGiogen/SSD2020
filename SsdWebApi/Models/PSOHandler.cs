@@ -43,9 +43,9 @@ namespace SsdWebApi.Services
         dimensions = 7;
         valueMin = 5;
         valueMax = (100 - valueMin * dimensions) * 2 / dimensions + valueMin;
+        adeguateLimits = PSOHandler.adeguateLimitsPerc(5);
         velocityMin = 5;
         velocityMax = 10;
-        adeguateLimits = PSOHandler.adeguateLimitsPerc(5);
 
         if (id == 3)
         {
@@ -92,7 +92,7 @@ namespace SsdWebApi.Services
         // Aggregazione degli indici in un unico indice di portafoglio
         double[] portfolioPctChanges = transposeMatrix(relativePctChanges).Select((indexPctChanges, i) => indexPctChanges.Sum()).ToArray();
         // Calcolo VaR con Historical Simulation
-        return percentile(portfolioPctChanges, 0.05);
+        return percentile(portfolioPctChanges, 0.05) * 100000;
       };
     }
 
@@ -105,7 +105,7 @@ namespace SsdWebApi.Services
         // Con la divisione si comparano meglio guadagni e rischi alti con guadagni e rischi bassi
         // Si ipotizza un investimento di 100.000 euro
         for (i = 0; i < dim - 1; i++)
-          sum += revenue[i] * 100000 * xvec[i] / (risk[i] * 100000 * xvec[i]);
+          sum += (revenue[i] * 100000 * xvec[i]) - (risk[i] * 100000 * xvec[i]);
         return sum;
       };
     }
